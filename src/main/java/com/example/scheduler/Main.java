@@ -18,6 +18,7 @@ public class Main extends Application {
         System.out.println("Hello world");
 
         this.stage = primaryStage;
+        stage.show();
         //Scheduler scheduler = new Scheduler();
     }
 
