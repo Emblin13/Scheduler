@@ -6,7 +6,7 @@ import javafx.stage.Stage;
 import java.io.File;
 
 public class Main extends Application {
-    public static Stage stage;// = new Stage();
+    public Stage stage;// = new Stage();
     public static File toRead = new File("temp.txt");
 
     public static void main(String[] args){
@@ -18,8 +18,8 @@ public class Main extends Application {
         System.out.println("Hello world");
 
         this.stage = primaryStage;
-        stage.show();
-        //Scheduler scheduler = new Scheduler();
+        Menu menu = new Menu();
+        menu.start(stage);
     }
 
 }
