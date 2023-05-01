@@ -28,7 +28,7 @@ public class Menu {
         layout = new VBox(20);
         layout.getChildren().addAll(managerButton, employeeButton);
         layout.setAlignment(javafx.geometry.Pos.CENTER);
-        scene = new Scene(layout, 300, 250);
+        scene = new Scene(layout, 1000, 700);
         stage.setScene(scene);
 
         stage.show();
