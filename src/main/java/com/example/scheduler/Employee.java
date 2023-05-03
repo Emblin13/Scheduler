@@ -9,6 +9,7 @@ public class Employee {
         this.name = name;
         this.id = id;
         this.role = role;
+        System.out.println(String.format("Employee %s created", this.name));
     }
 
     public String getName(){

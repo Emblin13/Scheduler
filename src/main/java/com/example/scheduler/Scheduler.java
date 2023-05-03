@@ -59,30 +59,52 @@ public class Scheduler {
     }
 
 
-    public void AddEmployeeButtonClicked(){
+    private void AddEmployeeButtonClicked(){
         System.out.println("Add Employee button clicked");
         if (subMenuOpen == false){
             subMenuOpen = true;
             Stage subStage = new Stage();
             subStage.setTitle("Add Employee");
-            HBox holder = new HBox(20);
-            VBox names = new VBox(20);
-            VBox fillInBoxes = new VBox(20);
-            VBox buttons = new VBox(20);
-            Button submitButton = new Button("Submit");
+
+            HBox firstNameLayout = new HBox(10);
+            HBox lastNameLayout = new HBox(10);
+
             Text firstNameText = new Text("First Name");
-            Text lastNameText = new Text("Last Name");
-
             TextArea firstNameTextArea = new TextArea();
+            firstNameTextArea.setPrefHeight(20);
+            firstNameTextArea.setPrefWidth(110);
+            Text lastNameText = new Text("Last Name");
             TextArea lastNameTextArea = new TextArea();
+            lastNameTextArea.setPrefHeight(20);
+            lastNameTextArea.setPrefWidth(110);
 
-            names.getChildren().addAll(firstNameText, lastNameText);
-            fillInBoxes.getChildren().addAll(firstNameTextArea, lastNameTextArea);
-            buttons.getChildren().addAll(submitButton);
-            holder.getChildren().addAll(names, fillInBoxes, buttons);
+            firstNameLayout.getChildren().addAll(firstNameText, firstNameTextArea);
+            firstNameLayout.setAlignment(javafx.geometry.Pos.CENTER);
+            lastNameLayout.getChildren().addAll(lastNameText, lastNameTextArea);
+            lastNameLayout.setAlignment(javafx.geometry.Pos.CENTER);
 
-            Scene subScene = new Scene(holder, 500, 500);
-            subStage.setScene(subScene);
+            VBox layout = new VBox(10);
+            layout.getChildren().addAll(firstNameLayout, lastNameLayout);
+            layout.setAlignment(javafx.geometry.Pos.CENTER);
+
+            Button submitButton = new Button("Submit");
+            submitButton.setOnAction(e -> {
+                String firstName = firstNameTextArea.getText();
+                String lastName = lastNameTextArea.getText();
+                if (firstName.trim().equals("") || sameNameEmployee((firstName + " " + lastName).trim())){
+                    System.out.println("First name or last name is empty");
+                    return;
+                }
+                Employee employee = new Employee((firstName + " " + lastName).trim(), 0, null);
+                employees.add(employee);
+                subStage.close();
+                subMenuOpen = false;
+            });
+
+            layout.getChildren().add(submitButton);
+
+            Scene scene = new Scene(layout, 500, 400);
+            subStage.setScene(scene);
 
             subStage.addEventHandler(javafx.stage.WindowEvent.WINDOW_CLOSE_REQUEST, event -> {
                 subMenuOpen = false;
@@ -90,6 +112,24 @@ public class Scheduler {
 
             subStage.show();
         }
+    }
+
+    private boolean sameNameRole(String name){
+        for (Role role : roles){
+            if (role.getName().equals(name)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean sameNameEmployee(String name){
+        for (Employee employee : employees){
+            if (employee.getName().equals(name)){
+                return true;
+            }
+        }
+        return false;
     }
 
 }
