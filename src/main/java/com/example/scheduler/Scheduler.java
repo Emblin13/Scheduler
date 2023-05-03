@@ -83,6 +83,11 @@ public class Scheduler {
 
             Scene subScene = new Scene(holder, 500, 500);
             subStage.setScene(subScene);
+
+            subStage.addEventHandler(javafx.stage.WindowEvent.WINDOW_CLOSE_REQUEST, event -> {
+                subMenuOpen = false;
+            });
+
             subStage.show();
         }
     }
