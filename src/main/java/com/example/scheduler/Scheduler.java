@@ -4,12 +4,10 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -40,29 +38,45 @@ public class Scheduler {
     }
 
     public void start(Stage stage){
+        layout = new BorderPane();
+        //Set background color to dark grey
+        scene = new Scene(layout, 1000, 700);
         System.out.println("Scheduler started");
         this.stage = stage;
         stage.setTitle("Scheduler");
 
-        //Create buttons
+        //Create buttons and make everyother button a different color
         addRoleButton = new Button("Add Role");
+        addRoleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
         addEmployeeButton = new Button("Add Employee");
+        addEmployeeButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
         addEmployeeButton.setOnAction(e -> AddEmployeeButtonClicked());
         saveButton = new Button("Save");
+        saveButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
         loadButton = new Button("Load");
+        loadButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
         editRoleButton = new Button("Edit Role");
+        editRoleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
         editEmployeeButton = new Button("Edit Employee");
+        editEmployeeButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
         deleteRoleButton = new Button("Delete Role");
+        deleteRoleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
 
-        topMenu = new HBox(20);
-        topMenu.getChildren().addAll(addRoleButton, addEmployeeButton, saveButton, loadButton, editRoleButton, editEmployeeButton, deleteRoleButton);
-        topMenu.setAlignment(javafx.geometry.Pos.CENTER);
+        //Spacer fills the rest of the top menu with a dark grey color and scales with the window
+        Pane spacer = new Pane();
+        spacer.setPrefHeight(saveButton.getPrefHeight());
+        spacer.setStyle("-fx-background-color: #333333;");
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        topMenu = new HBox(0);
+        topMenu.getChildren().addAll(addRoleButton, addEmployeeButton, saveButton, loadButton, editRoleButton, editEmployeeButton, deleteRoleButton, spacer);
 
         grid = new GridPane();
 
-        //Add employee text
+        //Add employee text and set background color to white
         Text textEmployee = new Text(" Employees ");
-        textEmployee.setStyle("-fx-font: 22 arial;");
+        textEmployee.wrappingWidthProperty().bind(scene.widthProperty().divide(8));
+        textEmployee.setStyle("-fx-font: 20 arial;");
         grid.add(textEmployee, 0, 0);
 
         //Set up the grid
@@ -106,15 +120,15 @@ public class Scheduler {
             }
             //Add the text to the grid
             Text text = new Text(dayOfWeek + " " + (calendar.get(Calendar.MONTH) + 1) + "/" + (calendar.get(Calendar.DAY_OF_MONTH) + i +" "));
-            text.setStyle("-fx-font: 22 arial;");
+            text.setStyle("-fx-font: 20 arial;");
+            //make the text scale 1/8 of the width of the screen
+            text.wrappingWidthProperty().bind(scene.widthProperty().divide(8));
             grid.add(text, i + 1, 0);
         }
 
         //Set up the layout which holds the top menu and the grid
-        layout = new BorderPane();
         layout.setTop(topMenu);
         layout.setCenter(grid);
-        scene = new Scene(layout, 1000, 700);
         stage.setScene(scene);
     }
 
@@ -169,7 +183,7 @@ public class Scheduler {
 
                 //add employee to grid
                 Text text = new Text(employee.getName());
-                text.setStyle("-fx-font: 22 arial;");
+                text.setStyle("-fx-font: 20 arial;");
                 grid.add(text, 0, employees.size());
             });
 
