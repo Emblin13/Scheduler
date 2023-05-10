@@ -2,7 +2,7 @@ package com.example.scheduler;
 
 public class Employee {
     private String name;
-    private int id;
+    private Integer id;
     private Role role;
 
     public Employee(String name, int id, Role role){
@@ -12,8 +12,22 @@ public class Employee {
         System.out.println(String.format("Employee %s created", this.name));
     }
 
+    public Employee(String name, Integer id){
+        this.name = name;
+        this.id = id;
+        System.out.println(String.format("Employee %s created", this.name));
+    }
+
     public String getName(){
         return this.name;
+    }
+
+    public String getFirstName(){
+        return this.name.split(" ")[0];
+    }
+
+    public String getLastName(){
+        return this.name.split(" ")[1];
     }
 
     public int getId(){
