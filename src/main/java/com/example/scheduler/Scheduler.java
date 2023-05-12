@@ -52,7 +52,7 @@ public class Scheduler {
         addRoleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
         addEmployeeButton = new Button("Add Employee");
         addEmployeeButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
-        addEmployeeButton.setOnAction(e -> AddEmployeeButtonClicked());
+        addEmployeeButton.setOnAction(e -> editEmployeeStage(null));
         saveButton = new Button("Save");
         saveButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
         loadButton = new Button("Load");
@@ -78,74 +78,6 @@ public class Scheduler {
         layout.setTop(topMenu);
         layout.setCenter(grid);
         stage.setScene(scene);
-    }
-
-    private void AddEmployeeButtonClicked(){
-        System.out.println("Add Employee button clicked");
-        //If a sub menu is already open, don't open another one.
-        if (subMenuOpen == false){
-            subMenuOpen = true;
-            Stage subStage = new Stage();
-            subStage.setTitle("Add Employee");
-
-            //Layout for the sub menu inputs.
-            HBox firstNameLayout = new HBox(10);
-            HBox lastNameLayout = new HBox(10);
-
-            //Text and text area for the first and last name.
-            Text firstNameText = new Text("First Name");
-            TextArea firstNameTextArea = new TextArea();
-            firstNameTextArea.setPrefHeight(20);
-            firstNameTextArea.setPrefWidth(110);
-            Text lastNameText = new Text("Last Name");
-            TextArea lastNameTextArea = new TextArea();
-            lastNameTextArea.setPrefHeight(20);
-            lastNameTextArea.setPrefWidth(110);
-
-            //Add the text and text area together and centers them.
-            firstNameLayout.getChildren().addAll(firstNameText, firstNameTextArea);
-            firstNameLayout.setAlignment(javafx.geometry.Pos.CENTER);
-            lastNameLayout.getChildren().addAll(lastNameText, lastNameTextArea);
-            lastNameLayout.setAlignment(javafx.geometry.Pos.CENTER);
-
-            //Add the first and last name layouts to the main layout.
-            VBox layout = new VBox(10);
-            layout.getChildren().addAll(firstNameLayout, lastNameLayout);
-            layout.setAlignment(javafx.geometry.Pos.CENTER);
-
-            //Submit button to add the employee to the list and to close the sub menu after.
-            Button submitButton = new Button("Submit");
-            submitButton.setOnAction(e -> {
-                String firstName = firstNameTextArea.getText();
-                String lastName = lastNameTextArea.getText();
-                //If the first name is empty or the name is already in the list, don't add the employee.
-                if (firstName.trim().equals("") || sameNameEmployee((firstName + " " + lastName).trim())){
-                    System.out.println("First name or last name is empty");
-                    return;
-                }
-                Employee employee = new Employee((firstName + " " + lastName).trim(), null);
-                employees.add(employee);
-                subStage.close();
-                subMenuOpen = false;
-
-                //add employee to grid
-                addEmployeeRow(employees, employees.size() - 1);
-            });
-
-            //Add the submit button to the main layout.
-            layout.getChildren().add(submitButton);
-
-            //Set the scene and show the stage.
-            Scene scene = new Scene(layout, 500, 400);
-            subStage.setScene(scene);
-
-            //If the sub menu is closed, set the subMenuOpen to false.
-            subStage.addEventHandler(javafx.stage.WindowEvent.WINDOW_CLOSE_REQUEST, event -> {
-                subMenuOpen = false;
-            });
-
-            subStage.show();
-        }
     }
 
     private void addEmployeeRow(ArrayList<Employee> employees, int index){
@@ -182,10 +114,12 @@ public class Scheduler {
         textEmployee.setStyle("-fx-font: 20 arial;");
         grid.add(textEmployee, 0, 0);
 
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DATE, mod);
+
         for (int i = 0; i < 7; i++){
-            Calendar calendar = Calendar.getInstance();
             //1 is Sunday, 2 is Monday, etc.
-            int day = (calendar.get(Calendar.DAY_OF_WEEK) + i + mod);
+            int day = (calendar.get(Calendar.DAY_OF_WEEK));
             //If the day is greater than 7, subtract 7 to get the correct day of the week
             if (day > 7){
                 day = day - 7;
@@ -214,21 +148,21 @@ public class Scheduler {
                     dayOfWeek = "Sat";
                     break;
             }
-            calendar.add(Calendar.DAY_OF_MONTH, i + mod);
             //Add the text to the grid
-            Text text = new Text(dayOfWeek + " " + (calendar.get(Calendar.MONTH) + 1) + "/" + (calendar.get(Calendar.DAY_OF_MONTH) + i +" "));
+            Text text = new Text(dayOfWeek + " " + (calendar.get(Calendar.MONTH) + 1) + "/" + (calendar.get(Calendar.DAY_OF_MONTH) +" "));
             text.setStyle("-fx-font: 20 arial;");
             //make the text scale 1/8 of the width of the screen
             text.wrappingWidthProperty().bind(scene.widthProperty().divide(8));
             grid.add(text, i + 1, 0);
-
-            //Add the employees to the grid
-            for (int j = 0; j < employees.size(); j++){
-                addEmployeeRow(employees, j);
-            }
+            calendar.add(Calendar.DATE, 1);
+        }
+        //Add the employees to the grid
+        for (int j = 0; j < employees.size(); j++){
+            addEmployeeRow(employees, j);
         }
     }
 
+    //Also allows you to add a new employee
     private void editEmployeeStage(Employee employee){
         if (!subMenuOpen){
             Stage subStage = new Stage();
