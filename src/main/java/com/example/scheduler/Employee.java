@@ -1,14 +1,16 @@
 package com.example.scheduler;
 
+import java.util.ArrayList;
+
 public class Employee {
     private String name;
     private Integer id;
-    private Role role;
+    private ArrayList<Role> roles = new ArrayList<Role>();
 
     public Employee(String name, int id, Role role){
         this.name = name;
         this.id = id;
-        this.role = role;
+        this.roles.add(role);
         System.out.println(String.format("Employee %s created", this.name));
     }
 
@@ -34,8 +36,28 @@ public class Employee {
         return this.id;
     }
 
-    public Role getRole(){
-        return this.role;
+    public ArrayList<Role> getRoles(){
+        return this.roles;
+    }
+
+    public void addRole(Role role){
+        this.roles.add(role);
+    }
+
+    public void removeRole(Role role){
+        this.roles.remove(role);
+    }
+
+    public void removeRole(int index){
+        this.roles.remove(index);
+    }
+
+    public void removeRole(String name){
+        for (Role role : this.roles){
+            if (role.getName().equals(name)){
+                this.roles.remove(role);
+            }
+        }
     }
 
     public void setName(String name){
@@ -45,10 +67,5 @@ public class Employee {
     public void setId(int id){
         this.id = id;
     }
-
-    public void setRole(Role role){
-        this.role = role;
-    }
-
 
 }
