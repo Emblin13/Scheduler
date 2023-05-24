@@ -8,6 +8,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 
@@ -18,6 +19,7 @@ public class Scheduler {
     Stage stage;
     ArrayList<Role> roles = new ArrayList<Role>();
 
+    int dayOffset;
     BorderPane layout;
     HBox topMenu;
     GridPane grid;
@@ -26,16 +28,16 @@ public class Scheduler {
     Boolean subMenuOpen = false;
 
     //buttons
-    Button addRoleButton;
-    Button addEmployeeButton;
-    Button saveButton;
-    Button loadButton;
-    Button editRoleButton;
-    Button editEmployeeButton;
-    Button deleteRoleButton;
-    Button generateScheduleButton;
-    Button previousWeekButton;
-    Button nextWeekButton;
+    private Button addRoleButton;
+    private Button addEmployeeButton;
+    private Button saveButton;
+    private Button loadButton;
+    private Button editRoleButton;
+    private Button editEmployeeButton;
+    private Button deleteRoleButton;
+    private Button generateScheduleButton;
+    private Button previousWeekButton;
+    private Button nextWeekButton;
 
     public Scheduler(){
         System.out.println("Scheduler created");
@@ -54,7 +56,7 @@ public class Scheduler {
         addRoleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
         addEmployeeButton = new Button("Add Employee");
         addEmployeeButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
-        addEmployeeButton.setOnAction(e -> editEmployeeStage(null));
+        addEmployeeButton.setOnAction(e -> employeeStage(null));
         saveButton = new Button("Save");
         saveButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
         loadButton = new Button("Load");
@@ -90,7 +92,7 @@ public class Scheduler {
         button.setMaxWidth(Double.MAX_VALUE);
         grid.add(button, 0, index + 1);
         button.setOnAction(e -> {
-            editEmployeeStage(employee);
+            employeeStage(employee);
         });
 
         for (int i = 0; i < 7; i++){
@@ -165,7 +167,7 @@ public class Scheduler {
     }
 
     //Also allows you to add a new employee
-    private void editEmployeeStage(Employee employee){
+    private void employeeStage(Employee employee){
         if (!subMenuOpen){
             Stage subStage = new Stage();
             subStage.setTitle("Add Employee");
@@ -187,7 +189,6 @@ public class Scheduler {
             if (employee != null){
                 firstNameTextArea.setText(employee.getFirstName());
                 lastNameTextArea.setText(employee.getLastName());
-                employee.assignId();
             }
 
             //Add the text and text area together and centers them.
@@ -204,31 +205,18 @@ public class Scheduler {
             //Submit button to add the employee to the list and to close the sub menu after.
             Button submitButton = new Button("Submit");
             submitButton.setOnAction(e -> {
+                int id = 0;
                 String firstName = firstNameTextArea.getText();
                 String lastName = lastNameTextArea.getText();
                 //If the first or last name is blank, or the ID is already in the list, don't add the employee.
-                if (employee == null || firstName.isBlank() || lastName.isBlank() ||
-                        this.sameIdEmployee(employee.getId())){
-                    System.out.println("First name or last name is empty, employee ID already exists, or employee is null");
-                    return;
-                }
-                if (employee != null){
-                    employee.setFirstName(firstName);
-                    employee.setLastName(lastName);
-                    subStage.close();
-                    subMenuOpen = false;
-                    showWeek(0);
+                if (firstName.equals("") || lastName.equals("")) {
+                    System.out.println("First or last name is blank");
                     return;
                 } else {
-                    //placeholder for ID. Fix this
-                    Employee newEmployee = new Employee(firstName, lastName, 0, null);
-                    employees.add(newEmployee);
+                    editEmployee(id, firstName, lastName, null, null);
                     subStage.close();
                     subMenuOpen = false;
-                    showWeek(0);
                 }
-                //add employee to grid
-                addEmployeeRow(employees, employees.size() - 1);
             });
 
             //Add the submit button to the main layout.
@@ -267,18 +255,33 @@ public class Scheduler {
         return false;
     }
 
-    private void generateSchedule(){
-
+    private void editEmployee(int id, String first, String last, String role, LocalTime birth){
+        Employee employee = null;
+        if(sameIdEmployee(id) != -1){
+            employee = employees.get(sameIdEmployee(id));
+        }
+        if (employee == null){
+            System.out.println("Making new employee");
+            employee = new Employee(first, last, id, null);
+            employees.add(employee);
+            System.out.println("Employee created: " + employee.getFirstName() + " " + employee.getLastName());
+        } else {
+            employee.setFirstName(first);
+            employee.setLastName(last);
+            //employee.setRole(role);
+            //employee.setBirth(birth);
+        }
+        showWeek(dayOffset);
     }
 
     //Checks if the ID is already in the list.
-    public boolean sameIdEmployee(int id){
+    public int sameIdEmployee(int id){
         for (Employee employee : employees){
-            if (id == employee.getId()){
-                return true;
+            if (employee.getId() == id){
+                return employee.getId();
             }
         }
-        return false;
+        return -1;
     }
 
     public ArrayList<Employee> getEmployees() {
