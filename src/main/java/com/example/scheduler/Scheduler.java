@@ -7,15 +7,17 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 
+
 public class Scheduler {
+    private ArrayList<Employee> employees = new ArrayList<Employee>();
+
     Stage stage;
     ArrayList<Role> roles = new ArrayList<Role>();
-    ArrayList<Employee> employees = new ArrayList<Employee>();
+
     BorderPane layout;
     HBox topMenu;
     GridPane grid;
@@ -82,7 +84,7 @@ public class Scheduler {
 
     private void addEmployeeRow(ArrayList<Employee> employees, int index){
         Employee employee = employees.get(index);
-        Button button = new Button(employee.getName());
+        Button button = new Button(employee.getFirstName() + " " + employee.getLastName());
         button.setStyle("-fx-font-size: 20; -fx-background-color: transparent;");
         button.setPrefHeight(20);
         button.setMaxWidth(Double.MAX_VALUE);
@@ -185,6 +187,7 @@ public class Scheduler {
             if (employee != null){
                 firstNameTextArea.setText(employee.getFirstName());
                 lastNameTextArea.setText(employee.getLastName());
+                employee.assignId();
             }
 
             //Add the text and text area together and centers them.
@@ -203,19 +206,22 @@ public class Scheduler {
             submitButton.setOnAction(e -> {
                 String firstName = firstNameTextArea.getText();
                 String lastName = lastNameTextArea.getText();
-                //If the first name is empty or the name is already in the list, don't add the employee.
-                if (firstName.trim().equals("") || sameNameEmployee((firstName + " " + lastName).trim())){
-                    System.out.println("First name or last name is empty");
+                //If the first or last name is blank, or the ID is already in the list, don't add the employee.
+                if (employee == null || firstName.isBlank() || lastName.isBlank() ||
+                        this.sameIdEmployee(employee.getId())){
+                    System.out.println("First name or last name is empty, employee ID already exists, or employee is null");
                     return;
                 }
                 if (employee != null){
-                    employee.setName((firstName + " " + lastName).trim());
+                    employee.setFirstName(firstName);
+                    employee.setLastName(lastName);
                     subStage.close();
                     subMenuOpen = false;
                     showWeek(0);
                     return;
                 } else {
-                    Employee newEmployee = new Employee((firstName + " " + lastName).trim(), null);
+                    //placeholder for ID. Fix this
+                    Employee newEmployee = new Employee(firstName, lastName, 0, null);
                     employees.add(newEmployee);
                     subStage.close();
                     subMenuOpen = false;
@@ -265,14 +271,18 @@ public class Scheduler {
 
     }
 
-    //Checks if the name is already in the list.
-    public boolean sameNameEmployee(String name){
+    //Checks if the ID is already in the list.
+    public boolean sameIdEmployee(int id){
         for (Employee employee : employees){
-            if (employee.getName().equals(name)){
+            if (id == employee.getId()){
                 return true;
             }
         }
         return false;
+    }
+
+    public ArrayList<Employee> getEmployees() {
+        return employees;
     }
 
 }

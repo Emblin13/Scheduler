@@ -1,3 +1,5 @@
+package com.example.scheduler;
+
 import java.time.LocalTime;
 import java.util.ArrayList;
 
