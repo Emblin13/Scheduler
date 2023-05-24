@@ -20,6 +20,7 @@ public class Scheduler {
     ArrayList<Role> roles = new ArrayList<Role>();
 
     int dayOffset;
+    int tempId = -1;
     BorderPane layout;
     HBox topMenu;
     GridPane grid;
@@ -169,7 +170,7 @@ public class Scheduler {
     //Also allows you to add a new employee
     private void employeeStage(Employee employee){
         if (!subMenuOpen){
-            int id = -1;
+            tempId = -1;
             Stage subStage = new Stage();
             subStage.setTitle("Add Employee");
 
@@ -188,7 +189,7 @@ public class Scheduler {
             lastNameTextArea.setPrefWidth(110);
 
             if (employee != null){
-                id = employee.getId();
+                tempId = employee.getId();
                 firstNameTextArea.setText(employee.getFirstName());
                 lastNameTextArea.setText(employee.getLastName());
             }
@@ -214,7 +215,7 @@ public class Scheduler {
                     System.out.println("First or last name is blank");
                     return;
                 } else {
-                    editEmployee(id, firstName, lastName, null, null);
+                    editEmployee(firstName, lastName, null, null);
                     subStage.close();
                     subMenuOpen = false;
                 }
@@ -256,8 +257,9 @@ public class Scheduler {
         return false;
     }
 
-    private void editEmployee(int id, String first, String last, String role, LocalTime birth){
+    private void editEmployee(String first, String last, String role, LocalTime birth){
         Employee employee = null;
+        int id = tempId;
         if(sameIdEmployee(id) != -1){
             employee = employees.get(sameIdEmployee(id));
         }
@@ -278,9 +280,9 @@ public class Scheduler {
 
     //Checks if the ID is already in the list.
     public int sameIdEmployee(int id){
-        for (Employee employee : employees){
-            if (employee.getId() == id){
-                return employee.getId();
+        for (int i = 0; i < employees.size(); i++){
+            if (employees.get(i).getId() == id){
+                return i;
             }
         }
         return -1;
