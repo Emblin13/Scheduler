@@ -32,17 +32,11 @@ public class Role {
         this.id = id;
     }
 
-    public void addEmployee(Employee employee){
-        this.employees.add(employee);
-    }
+    //public void addEmployee(Employee employee){ this.employees.add(employee); }
 
-    public void removeEmployee(Employee employee){
-        this.employees.remove(employee);
-    }
+    //public void removeEmployee(Employee employee){ this.employees.remove(employee); }
 
-    public void removeEmployee(int index){
-        this.employees.remove(index);
-    }
+    //public void removeEmployee(int index){ this.employees.remove(index); }
 
 
 }

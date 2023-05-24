@@ -12,7 +12,7 @@ public class Employee {
     private String lastName;
     private int id;
     private LocalTime birthDate;
-    private ArrayList<String> roles;
+    private ArrayList<Role> roles;
     private int maximumDesiredHours;
     private int maximumHours;
 
@@ -27,7 +27,7 @@ public class Employee {
 
     //Employee Constructor with Roles
     public Employee(final String firstName, final String lastName, final int ID, final LocalTime birthDate,
-                    ArrayList<String> roles) {
+                    ArrayList<Role> roles) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.id = ID;
@@ -52,32 +52,18 @@ public class Employee {
         return this.id;
     }
 
-    public ArrayList<String> getRoles(){ return this.roles; }
+    public ArrayList<Role> getRoles(){ return this.roles; }
 
-    public void addRole(String role){
+    public void addRole(Role role){
         this.roles.add(role);
     }
 
-    public void removeRole(String role){
+    public void removeRole(Role role){
         this.roles.remove(role);
     }
 
     public void removeRole(int index){
         this.roles.remove(index);
-    }
-
-    public void removeAllRolesByName(String name){
-        for (String role : this.roles){
-            if (role.equals(name)){
-                this.roles.remove(role);
-            }
-        }
-    }
-
-    //This can produce duplicate ids. Find a way to check for duplicate ids without exposing the scheduler to Employee
-    public void assignId() {
-        Random rand = new Random(System.currentTimeMillis());
-        this.id = rand.nextInt(0,10000);
     }
 
 }

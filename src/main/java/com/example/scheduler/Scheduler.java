@@ -285,4 +285,16 @@ public class Scheduler {
         return employees;
     }
 
+    //This can produce duplicate ids. Find a way to check for duplicate ids without exposing the scheduler to Employee
+    private int assignId() {
+        int index = 0;
+        int newId = -1;
+        for (Employee e : this.employees) {
+            if(index != e.getId()) {
+                newId = index;
+            }
+            index++;
+        }
+        return newId;
+    }
 }
