@@ -169,6 +169,7 @@ public class Scheduler {
     //Also allows you to add a new employee
     private void employeeStage(Employee employee){
         if (!subMenuOpen){
+            int id = -1;
             Stage subStage = new Stage();
             subStage.setTitle("Add Employee");
 
@@ -187,6 +188,7 @@ public class Scheduler {
             lastNameTextArea.setPrefWidth(110);
 
             if (employee != null){
+                id = employee.getId();
                 firstNameTextArea.setText(employee.getFirstName());
                 lastNameTextArea.setText(employee.getLastName());
             }
@@ -205,7 +207,6 @@ public class Scheduler {
             //Submit button to add the employee to the list and to close the sub menu after.
             Button submitButton = new Button("Submit");
             submitButton.setOnAction(e -> {
-                int id = 0;
                 String firstName = firstNameTextArea.getText();
                 String lastName = lastNameTextArea.getText();
                 //If the first or last name is blank, or the ID is already in the list, don't add the employee.
@@ -263,6 +264,7 @@ public class Scheduler {
         if (employee == null){
             System.out.println("Making new employee");
             employee = new Employee(first, last, id, null);
+            employee.assignId();
             employees.add(employee);
             System.out.println("Employee created: " + employee.getFirstName() + " " + employee.getLastName());
         } else {
