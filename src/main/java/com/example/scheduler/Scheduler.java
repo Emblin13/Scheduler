@@ -267,7 +267,8 @@ public class Scheduler {
             System.out.println("Making new employee");
             employee = new Employee(first, last, assignId(), null);
             employees.add(employee);
-            System.out.println("Employee created: " + employee.getFirstName() + " " + employee.getLastName());
+            System.out.println("Employee created: " + employee.getFirstName() + " " + employee.getLastName()
+                    + " with ID " + employee.getId());
         } else {
             employee.setFirstName(first);
             employee.setLastName(last);
@@ -291,15 +292,12 @@ public class Scheduler {
         return employees;
     }
 
-    //This can produce duplicate ids. Find a way to check for duplicate ids without exposing the scheduler to Employee
     private int assignId() {
-        int index = 0;
-        int newId = -1;
+        int newId = 0;
         for (Employee e : this.employees) {
-            if(index != e.getId()) {
-                newId = index;
+            if(newId == e.getId()) {
+                newId++;
             }
-            index++;
         }
         return newId;
     }
