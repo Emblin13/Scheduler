@@ -265,8 +265,7 @@ public class Scheduler {
         }
         if (employee == null){
             System.out.println("Making new employee");
-            employee = new Employee(first, last, id, null);
-            employee.assignId();
+            employee = new Employee(first, last, assignId(), null);
             employees.add(employee);
             System.out.println("Employee created: " + employee.getFirstName() + " " + employee.getLastName());
         } else {
