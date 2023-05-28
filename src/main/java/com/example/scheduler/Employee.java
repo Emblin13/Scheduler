@@ -20,6 +20,7 @@ public class Employee {
     public Employee(final String firstName, final String lastName, final int ID, final LocalTime birthDate) {
         this.firstName = firstName;
         this.lastName = lastName;
+        capitalizeName();
         this.id = ID;
         this.birthDate = birthDate;
         System.out.println(String.format("Employee %s %s created", this.firstName, this.lastName));
@@ -30,6 +31,7 @@ public class Employee {
                     ArrayList<Role> roles) {
         this.firstName = firstName;
         this.lastName = lastName;
+        capitalizeName();
         this.id = ID;
         this.birthDate = birthDate;
         this.roles = roles;
@@ -40,9 +42,15 @@ public class Employee {
         return this.firstName;
     }
 
-    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+        capitalizeName();
+    }
 
-    public void setLastName(String lastName) { this.lastName = lastName; }
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+        capitalizeName();
+    }
 
     public String getLastName(){
         return this.lastName;
@@ -58,6 +66,10 @@ public class Employee {
         this.roles.add(role);
     }
 
+    public void setRoles(ArrayList<Role> roles){
+        this.roles = roles;
+    }
+
     public void removeRole(Role role){
         this.roles.remove(role);
     }
@@ -66,4 +78,8 @@ public class Employee {
         this.roles.remove(index);
     }
 
+    private void capitalizeName(){
+        this.firstName = this.firstName.substring(0,1).toUpperCase() + this.firstName.substring(1).toLowerCase();
+        this.lastName = this.lastName.substring(0,1).toUpperCase() + this.lastName.substring(1).toLowerCase();
+    }
 }

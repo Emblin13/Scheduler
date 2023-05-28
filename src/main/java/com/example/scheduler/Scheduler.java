@@ -3,6 +3,7 @@ package com.example.scheduler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
@@ -64,10 +65,33 @@ public class Scheduler {
         loadButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
         editRoleButton = new Button("Edit Role");
         editRoleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
+        editRoleButton.setOnAction(e -> editRoleStage());
         editEmployeeButton = new Button("Edit Employee");
         editEmployeeButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
         deleteRoleButton = new Button("Delete Role");
         deleteRoleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
+        previousWeekButton = new Button("Previous Week");
+        previousWeekButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
+        nextWeekButton = new Button("Next Week");
+        nextWeekButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
+
+        previousWeekButton.setOnAction(e -> {
+            dayOffset -= 7;
+            if (dayOffset < 0){
+                dayOffset = 0;
+            }
+            showWeek(dayOffset);
+        });
+
+        nextWeekButton.setOnAction(e -> {
+            dayOffset += 7;
+            if(dayOffset > 28){
+                dayOffset = 28;
+            }
+            showWeek(dayOffset);
+        });
+
+        addRoleButton.setOnAction(e -> roleStage(null));
 
         //Spacer fills the rest of the top menu with a dark grey color and scales with the window
         Pane spacer = new Pane();
@@ -76,7 +100,7 @@ public class Scheduler {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         topMenu = new HBox(0);
-        topMenu.getChildren().addAll(addRoleButton, addEmployeeButton, saveButton, loadButton, editRoleButton, editEmployeeButton, deleteRoleButton, spacer);
+        topMenu.getChildren().addAll(addRoleButton, addEmployeeButton, saveButton, loadButton, editRoleButton, editEmployeeButton, deleteRoleButton, previousWeekButton, nextWeekButton, spacer);
 
         showWeek(0);
 
@@ -173,6 +197,7 @@ public class Scheduler {
             tempId = -1;
             Stage subStage = new Stage();
             subStage.setTitle("Add Employee");
+            ArrayList<Role> tempRoles = new ArrayList<>();
 
             //Layout for the sub menu inputs.
             HBox firstNameLayout = new HBox(10);
@@ -205,17 +230,41 @@ public class Scheduler {
             layout.getChildren().addAll(firstNameLayout, lastNameLayout);
             layout.setAlignment(javafx.geometry.Pos.CENTER);
 
+            //A drop down menu to select the role of the employee.
+            ArrayList<ChoiceBox> choiceBoxes = new ArrayList<>();
+            if (employee != null && employee.getRoles() != null) {
+                for (int i = 0; i < employee.getRoles().size(); i++){
+                    ChoiceBox choiceBox = new ChoiceBox();
+                    choiceBoxes.add(choiceBox);
+                    choiceBoxesAddRoles(choiceBoxes.get(i));
+                    choiceBoxes.get(i).setValue(employee.getRoles().get(i).getName());
+                    tempRoles.add(employee.getRoles().get(i));
+                    choiceBox.setOnAction(e -> choiceBoxEvent(choiceBox, choiceBoxes, tempRoles, layout));
+                    choiceBox.setValue(employee.getRoles().get(i).getName());
+                }
+            }
+            ChoiceBox choiceBox = new ChoiceBox();
+            choiceBoxesAddRoles(choiceBox);
+            choiceBoxes.add(choiceBox);
+            choiceBox.setOnAction(e -> choiceBoxEvent(choiceBox, choiceBoxes, tempRoles, layout));
+
+            //Add the choice box to the main layout.
+            for (ChoiceBox choiceBox1 : choiceBoxes) {
+                layout.getChildren().add(choiceBox1);
+            }
+
             //Submit button to add the employee to the list and to close the sub menu after.
             Button submitButton = new Button("Submit");
             submitButton.setOnAction(e -> {
                 String firstName = firstNameTextArea.getText();
                 String lastName = lastNameTextArea.getText();
+
                 //If the first or last name is blank, or the ID is already in the list, don't add the employee.
                 if (firstName.equals("") || lastName.equals("")) {
                     System.out.println("First or last name is blank");
                     return;
                 } else {
-                    editEmployee(firstName, lastName, null, null);
+                    editEmployee(firstName, lastName, tempRoles, null);
                     subStage.close();
                     subMenuOpen = false;
                 }
@@ -257,7 +306,7 @@ public class Scheduler {
         return false;
     }
 
-    private void editEmployee(String first, String last, String role, LocalTime birth){
+    private void editEmployee(String first, String last, ArrayList<Role> tempList, LocalTime birth){
         Employee employee = null;
         int id = tempId;
         if(sameIdEmployee(id) != -1){
@@ -266,13 +315,17 @@ public class Scheduler {
         if (employee == null){
             System.out.println("Making new employee");
             employee = new Employee(first, last, assignId(), null);
+            employee.setRoles(tempList);
             employees.add(employee);
-            System.out.println("Employee created: " + employee.getFirstName() + " " + employee.getLastName()
-                    + " with ID " + employee.getId());
+            System.out.print("Employee created: " + employee.getFirstName() + " " + employee.getLastName() + " with ID " + employee.getId() + " and roles ");
+            for (Role role : employee.getRoles()){
+                System.out.print(role.getName() + " ");
+            }
+            System.out.println();
         } else {
             employee.setFirstName(first);
             employee.setLastName(last);
-            //employee.setRole(role);
+            employee.setRoles(tempList);
             //employee.setBirth(birth);
         }
         showWeek(dayOffset);
@@ -301,4 +354,158 @@ public class Scheduler {
         }
         return newId;
     }
+
+    private void roleStage(Role role){
+        if (!subMenuOpen){
+            tempId = -1;
+            Stage subStage = new Stage();
+            subStage.setTitle("Add Employee");
+
+            //Layout for the sub menu inputs.
+            HBox roleNameLayout = new HBox(10);
+
+            //Text and text area for the first and last name.
+            Text roleName = new Text("Role Name");
+            TextArea roleNameTextArea = new TextArea();
+            roleNameTextArea.setPrefHeight(20);
+            roleNameTextArea.setPrefWidth(110);
+
+            if (role != null){
+                tempId = role.getId();
+                roleNameTextArea.setText(role.getName());
+            }
+
+            //Add the text and text area together and centers them.
+            roleNameLayout.getChildren().addAll(roleName, roleNameTextArea);
+            roleNameLayout.setAlignment(javafx.geometry.Pos.CENTER);
+
+            //Add the first and last name layouts to the main layout.
+            VBox layout = new VBox(10);
+            layout.getChildren().addAll(roleNameLayout);
+            layout.setAlignment(javafx.geometry.Pos.CENTER);
+
+            //Submit button to add the employee to the list and to close the sub menu after.
+            Button submitButton = new Button("Submit");
+            submitButton.setOnAction(e -> {
+                String name = roleNameTextArea.getText();
+                //If the first or last name is blank, or the ID is already in the list, don't add the employee.
+                if (name.equals("")) {
+                    System.out.println("First or last name is blank");
+                    return;
+                } else {
+                    name = name.substring(0, 1).toUpperCase() + name.substring(1);
+                    roles.add(new Role(name, assignId()));
+                    System.out.println("Role created: " + name);
+                    subStage.close();
+                    subMenuOpen = false;
+                }
+            });
+
+            //add a delete button if the role is not null
+            if (role != null){
+                Button deleteButton = new Button("Delete");
+                deleteButton.setOnAction(e -> {
+                    roles.remove(role);
+                    subStage.close();
+                    subMenuOpen = false;
+                    showWeek(0);
+                });
+                layout.getChildren().add(deleteButton);
+            }
+
+            //Add the submit button to the main layout.
+            layout.getChildren().add(submitButton);
+
+            //Set the scene and show the stage.
+            Scene scene = new Scene(layout, 500, 400);
+            subStage.setScene(scene);
+
+            //If the sub menu is closed, set the subMenuOpen to false.
+            subStage.addEventHandler(javafx.stage.WindowEvent.WINDOW_CLOSE_REQUEST, event -> {
+                subMenuOpen = false;
+            });
+
+            subStage.show();
+        }
+    }
+
+    private void choiceBoxesAddRoles(ChoiceBox choiceBox){
+        for (Role role : roles){
+            choiceBox.getItems().add(role.getName());
+        }
+        choiceBox.getItems().add("");
+    }
+
+    private boolean choiceBoxesIsDeleted(ChoiceBox choiceBox){
+        //if choice equals blank then return true
+        return choiceBox.getValue().equals("");
+    }
+
+    private Role getRole(String name){
+        for (Role role : roles){
+            if (role.getName().equals(name)){
+                return role;
+            }
+        }
+        return null;
+    }
+
+    private void choiceBoxEvent(ChoiceBox choiceBox, ArrayList<ChoiceBox> choiceBoxes, ArrayList<Role> tempRoles, VBox layout){
+        if(choiceBox.getValue().equals("")){
+            if(choiceBoxes.size() == 1){
+                return;
+            }
+            tempRoles.remove(choiceBoxes.indexOf(choiceBox));
+            choiceBoxes.remove(choiceBox);
+            layout.getChildren().remove(choiceBox);
+        } else {
+            //if choice box changes, change the role in the tempRoles arraylist. if the choice box is the last one, add a new one.
+            if(choiceBoxes.get(choiceBoxes.size() - 1).equals(choiceBox)){
+                tempRoles.add(getRole((String) choiceBox.getValue()));
+                ChoiceBox newChoiceBox = new ChoiceBox();
+                choiceBoxesAddRoles(newChoiceBox);
+                //get submit button and remove it from the layout and add it back to the layout so it is at the bottom.
+                Button submitButton = (Button) layout.getChildren().get(layout.getChildren().size() - 1);
+                layout.getChildren().remove(submitButton);
+                layout.getChildren().add(newChoiceBox);
+                layout.getChildren().add(submitButton);
+                choiceBoxes.add(newChoiceBox);
+                newChoiceBox.setOnAction(e -> choiceBoxEvent(newChoiceBox, choiceBoxes, tempRoles, layout));
+            } else {
+                tempRoles.set(choiceBoxes.indexOf(choiceBox), getRole((String) choiceBox.getValue()));
+            }
+        }
+    }
+
+    private void editRoleStage(){
+        if (!subMenuOpen){
+            tempId = -1;
+            Stage subStage = new Stage();
+            subStage.setTitle("Edit Role");
+            VBox layout = new VBox(10);
+            layout.setAlignment(javafx.geometry.Pos.CENTER);
+
+            //Create Buttons for each of the roles
+            for (Role role : roles){
+                Button roleButton = new Button(role.getName());
+                roleButton.setOnAction(e -> {
+                    roleStage(role);
+                    subStage.close();
+                });
+                layout.getChildren().add(roleButton);
+            }
+
+            //Set the scene and show the stage.
+            Scene scene = new Scene(layout, 500, 400);
+            subStage.setScene(scene);
+
+            //If the sub menu is closed, set the subMenuOpen to false.
+            subStage.addEventHandler(javafx.stage.WindowEvent.WINDOW_CLOSE_REQUEST, event -> {
+                subMenuOpen = false;
+            });
+
+            subStage.show();
+        }
+    }
+
 }
