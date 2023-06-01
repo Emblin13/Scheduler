@@ -1,5 +1,6 @@
 package com.example.scheduler;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Random;
@@ -11,23 +12,30 @@ public class Employee {
     private String firstName;
     private String lastName;
     private int id;
-    private LocalTime birthDate;
+    private LocalDate birthDate;
     private ArrayList<Role> roles;
     private int maximumDesiredHours;
     private int maximumHours;
 
     //Employee Constructor
-    public Employee(final String firstName, final String lastName, final int ID, final LocalTime birthDate) {
+    public Employee(final String firstName, final String lastName, final int ID, final LocalDate birthDate,
+                    final LocalTime availability, final LocalTime preferences, final int priority,
+                    final int maxDesiredHours, final int maxHours) {
         this.firstName = firstName;
         this.lastName = lastName;
         capitalizeName();
         this.id = ID;
         this.birthDate = birthDate;
+        this.availability = availability;
+        this.preferences = preferences;
+        this.priority = priority;
+        this.maximumDesiredHours = maxDesiredHours;
+        this.maximumHours = maxHours;
         System.out.println(String.format("Employee %s %s created", this.firstName, this.lastName));
     }
 
     //Employee Constructor with Roles
-    public Employee(final String firstName, final String lastName, final int ID, final LocalTime birthDate,
+    public Employee(final String firstName, final String lastName, final int ID, final LocalDate birthDate,
                     ArrayList<Role> roles) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -81,5 +89,53 @@ public class Employee {
     private void capitalizeName(){
         this.firstName = this.firstName.substring(0,1).toUpperCase() + this.firstName.substring(1).toLowerCase();
         this.lastName = this.lastName.substring(0,1).toUpperCase() + this.lastName.substring(1).toLowerCase();
+    }
+
+    public LocalTime getAvailability() {
+        return availability;
+    }
+
+    public void setAvailability(LocalTime availability) {
+        this.availability = availability;
+    }
+
+    public LocalTime getPreferences() {
+        return preferences;
+    }
+
+    public void setPreferences(LocalTime preferences) {
+        this.preferences = preferences;
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public int getMaximumDesiredHours() {
+        return maximumDesiredHours;
+    }
+
+    public void setMaximumDesiredHours(int maximumDesiredHours) {
+        this.maximumDesiredHours = maximumDesiredHours;
+    }
+
+    public int getMaximumHours() {
+        return maximumHours;
+    }
+
+    public void setMaximumHours(int maximumHours) {
+        this.maximumHours = maximumHours;
     }
 }

@@ -20,6 +20,7 @@ public class Main extends Application {
         this.stage = primaryStage;
         Menu menu = new Menu();
         menu.start(stage);
+        
     }
 
 }

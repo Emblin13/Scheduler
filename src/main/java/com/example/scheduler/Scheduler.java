@@ -9,7 +9,9 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 
@@ -208,6 +210,36 @@ public class Scheduler {
             lastNameTextArea.setPrefHeight(20);
             lastNameTextArea.setPrefWidth(110);
 
+            Text birthDateText = new Text("Birth Date");
+            TextArea birthDateTextArea = new TextArea();
+            firstNameTextArea.setPrefHeight(20);
+            firstNameTextArea.setPrefWidth(110);
+
+            Text availabilityText = new Text("Availability");
+            TextArea availabilityTextArea = new TextArea();
+            firstNameTextArea.setPrefHeight(20);
+            firstNameTextArea.setPrefWidth(110);
+
+            Text preferencesText = new Text("Preferences");
+            TextArea preferencesTextArea = new TextArea();
+            firstNameTextArea.setPrefHeight(20);
+            firstNameTextArea.setPrefWidth(110);
+
+            Text priorityText = new Text("Priority");
+            TextArea priorityTextArea = new TextArea();
+            firstNameTextArea.setPrefHeight(20);
+            firstNameTextArea.setPrefWidth(110);
+
+            Text maxDesiredHoursText = new Text("Maximum Desired Hours");
+            TextArea maxDesiredHoursTextArea = new TextArea();
+            firstNameTextArea.setPrefHeight(20);
+            firstNameTextArea.setPrefWidth(110);
+
+            Text maxText = new Text("Maximum Hours");
+            TextArea maxTextArea = new TextArea();
+            firstNameTextArea.setPrefHeight(20);
+            firstNameTextArea.setPrefWidth(110);
+
             if (employee != null){
                 tempId = employee.getId();
                 firstNameTextArea.setText(employee.getFirstName());
@@ -253,13 +285,29 @@ public class Scheduler {
             submitButton.setOnAction(e -> {
                 String firstName = firstNameTextArea.getText();
                 String lastName = lastNameTextArea.getText();
+                String birthDateString = birthDateTextArea.getText();
+                String availabilityString = availabilityTextArea.getText();
+                String preferencesString = preferencesTextArea.getText();
+                String priorityString = priorityTextArea.getText();
+                String maxDesiredHoursString = maxDesiredHoursTextArea.getText();
+                String maxString = maxTextArea.getText();
+
+                //Convert the user inputted string into a birthday with the format MM/DD/YYYY
+                LocalDate birthDate = checkString(birthDateString) ? LocalDate.parse(birthDateString, DateTimeFormatter.ofPattern("MM/dd/yyyy")) : null;
+                //Convert a user inputted string into a LocalTime with the format HH:MM
+                LocalTime availability = checkString(availabilityString) ? LocalTime.parse(availabilityString, DateTimeFormatter.ofPattern("HH:mm")) : null;
+                LocalTime preferences = checkString(preferencesString) ? LocalTime.parse(preferencesString, DateTimeFormatter.ofPattern("HH:mm")) : null;
+                int priority = checkString(priorityString) ? Integer.parseInt(priorityString) : -1;
+                int maxDesiredHours = checkString(maxDesiredHoursString) ? Integer.parseInt(maxDesiredHoursString) : -1;
+                int max = checkString(maxString) ? Integer.parseInt(maxString) : -1;
+
 
                 //If the first or last name is blank, or the ID is already in the list, don't add the employee.
                 if (firstName.equals("") || lastName.equals("")) {
                     System.out.println("First or last name is blank");
                     return;
                 } else {
-                    editEmployee(firstName, lastName, tempRoles, null);
+                    editEmployee(firstName, lastName, tempRoles, birthDate, availability, preferences, priority, maxDesiredHours, max);
                     subStage.close();
                     subMenuOpen = false;
                 }
@@ -301,7 +349,8 @@ public class Scheduler {
         return false;
     }
 
-    private void editEmployee(String first, String last, ArrayList<Role> tempList, LocalTime birth){
+    private void editEmployee(String first, String last, ArrayList<Role> tempList, LocalDate birth, LocalTime availability,
+                              LocalTime preferences, int priority, int maxDesiredHours, int maxHours){
         Employee employee = null;
         int id = tempId;
         if(sameIdEmployee(id) != -1){
@@ -309,7 +358,8 @@ public class Scheduler {
         }
         if (employee == null){
             System.out.println("Making new employee");
-            employee = new Employee(first, last, assignId(), null);
+            employee = new Employee(first, last, assignId(), null, availability, preferences, priority,
+                    maxDesiredHours, maxHours);
             employee.setRoles(tempList);
             employees.add(employee);
             System.out.print("Employee created: " + employee.getFirstName() + " " + employee.getLastName() + " with ID " + employee.getId() + " and roles ");
@@ -321,7 +371,12 @@ public class Scheduler {
             employee.setFirstName(first);
             employee.setLastName(last);
             employee.setRoles(tempList);
-            //employee.setBirth(birth);
+            employee.setBirthDate(birth);
+            employee.setAvailability(availability);
+            employee.setPreferences(preferences);
+            employee.setPriority(priority);
+            employee.setMaximumDesiredHours(maxDesiredHours);
+            employee.setMaximumHours(maxHours);
         }
         showWeek(dayOffset);
     }
@@ -501,6 +556,13 @@ public class Scheduler {
 
             subStage.show();
         }
+    }
+
+    public boolean checkString(String string) {
+        if (string == null || string.isBlank()) {
+            return false;
+        }
+        return true;
     }
 
 }
