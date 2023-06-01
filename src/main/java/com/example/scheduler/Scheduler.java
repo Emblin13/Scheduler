@@ -6,7 +6,10 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.*;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
 import java.time.LocalDate;
@@ -24,7 +27,7 @@ public class Scheduler {
 
     int dayOffset;
     int tempId = -1;
-    BorderPane layout;
+    BorderPane mainBorderlayout;
     HBox topMenu;
     GridPane grid;
     Scene scene;
@@ -47,9 +50,9 @@ public class Scheduler {
     }
 
     public void start(Stage stage){
-        layout = new BorderPane();
+        mainBorderlayout = new BorderPane();
         //Set background color to dark grey
-        scene = new Scene(layout, 1000, 700);
+        scene = new Scene(mainBorderlayout, 1000, 700);
         System.out.println("Scheduler started");
         this.stage = stage;
         stage.setTitle("Scheduler");
@@ -101,8 +104,8 @@ public class Scheduler {
 
         showWeek(0);
 
-        layout.setTop(topMenu);
-        layout.setCenter(grid);
+        mainBorderlayout.setTop(topMenu);
+        mainBorderlayout.setCenter(grid);
         stage.setScene(scene);
     }
 
@@ -121,19 +124,54 @@ public class Scheduler {
             Button button1 = new Button();
             button1.setStyle("-fx-background-color: transparent;");
             button1.setMaxWidth(Double.MAX_VALUE);
-            button1.setPrefHeight(20);
+            button1.setPrefHeight(40);
             grid.add(button1, i + 1, index + 1);
+
+            int finalI = i;
+            button1.setOnAction(e -> {
+                editSchedule(employee, finalI);
+            });
         }
     }
 
+    private void editSchedule(Employee employee, int dayOffset){
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DATE, dayOffset);
+        System.out.println("Edit schedule of " + employee.getFirstName() + " " + employee.getLastName()+ " on " + calendar.getTime());
+
+        if (!subMenuOpen){
+            Stage subStage = new Stage();
+            subStage.setTitle("Edit Schedule");
+            //Add text to the top of the window telling the user the name of the employee and the date they are editing. Don't include the time.
+            Text text = new Text("Edit schedule of " + employee.getFirstName() + " " + employee.getLastName()+ " on " + (calendar.get(Calendar.MONTH) + 1) + "/" + calendar.get(Calendar.DATE));
+            text.setFont(Font.font("Verdana", FontWeight.BOLD, 20));
+            text.setTextAlignment(TextAlignment.CENTER);
+
+            VBox layout = new VBox(10);
+            layout.getChildren().add(text);
+
+            //Set the scene and show the stage.
+            Scene scene = new Scene(layout, 500, 400);
+            subStage.setScene(scene);
+
+            //If the sub menu is closed, set the subMenuOpen to false.
+            subStage.addEventHandler(javafx.stage.WindowEvent.WINDOW_CLOSE_REQUEST, event -> {
+                subMenuOpen = false;
+            });
+
+            subStage.show();
+        }
+
+    }
+
     private void showWeek(int mod){
-        layout.getChildren().remove(grid);
+        mainBorderlayout.getChildren().remove(grid);
         grid = new GridPane();
         grid.setHgap(0);
         grid.setVgap(0);
         grid.setAlignment(Pos.TOP_CENTER);
         grid.setGridLinesVisible(true);
-        layout.setCenter(grid);
+        mainBorderlayout.setCenter(grid);
 
         Text textEmployee = new Text(" Employees ");
         textEmployee.wrappingWidthProperty().bind(scene.widthProperty().divide(8));
