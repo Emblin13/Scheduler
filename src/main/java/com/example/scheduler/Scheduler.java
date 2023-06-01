@@ -36,7 +36,6 @@ public class Scheduler {
     private Button loadButton;
     private Button editRoleButton;
     private Button editEmployeeButton;
-    private Button deleteRoleButton;
     private Button generateScheduleButton;
     private Button previousWeekButton;
     private Button nextWeekButton;
@@ -66,10 +65,6 @@ public class Scheduler {
         editRoleButton = new Button("Edit Role");
         editRoleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
         editRoleButton.setOnAction(e -> editRoleStage());
-        editEmployeeButton = new Button("Edit Employee");
-        editEmployeeButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
-        deleteRoleButton = new Button("Delete Role");
-        deleteRoleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
         previousWeekButton = new Button("Previous Week");
         previousWeekButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
         nextWeekButton = new Button("Next Week");
@@ -100,7 +95,7 @@ public class Scheduler {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         topMenu = new HBox(0);
-        topMenu.getChildren().addAll(addRoleButton, addEmployeeButton, saveButton, loadButton, editRoleButton, editEmployeeButton, deleteRoleButton, previousWeekButton, nextWeekButton, spacer);
+        topMenu.getChildren().addAll(saveButton, loadButton, addRoleButton, editRoleButton, addEmployeeButton, previousWeekButton, nextWeekButton, spacer);
 
         showWeek(0);
 
