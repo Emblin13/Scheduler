@@ -4,6 +4,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
@@ -21,6 +22,7 @@ import java.util.*;
 
 public class Scheduler {
     private ArrayList<Employee> employees = new ArrayList<Employee>();
+    private ArrayList<Shift> shifts = new ArrayList<Shift>();
 
     Stage stage;
     ArrayList<Role> roles = new ArrayList<Role>();
@@ -33,6 +35,7 @@ public class Scheduler {
     Scene scene;
     //Boolean to keep track of if the sub menu is open or not
     Boolean subMenuOpen = false;
+    Map<Employee, Shift> shiftEmployeeMap = new HashMap<Employee, Shift>();
 
     //buttons
     private Button addRoleButton;
@@ -40,8 +43,9 @@ public class Scheduler {
     private Button saveButton;
     private Button loadButton;
     private Button editRoleButton;
-    private Button editEmployeeButton;
     private Button generateScheduleButton;
+    private Button addShiftButton;
+    private Button editShiftButton;
     private Button previousWeekButton;
     private Button nextWeekButton;
 
@@ -57,6 +61,21 @@ public class Scheduler {
         this.stage = stage;
         stage.setTitle("Scheduler");
 
+        for (int i = 0; i < 24; i++) {
+            Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.DATE, i);
+            DayOfWeek dayOfWeek = DayOfWeek.of(cal.get(Calendar.DAY_OF_WEEK));
+            LocalTime startTime = LocalTime.of(0, 0);
+            LocalTime endTime = LocalTime.of(23, 59);
+            int minimumShiftLength = 0;
+            int maximumShiftLength = 24;
+            ArrayList<Role> neededRoles = new ArrayList<Role>();
+            Calendar shiftDate = cal;
+            //public Shift(DayOfWeek shiftDay, LocalTime startTime, LocalTime endTime, int minimumShiftLength, int maximumShiftLength, ArrayList<String> neededRoles, Calendar shiftDate)
+            Shift tempShift = new Shift(dayOfWeek, startTime, endTime, minimumShiftLength, maximumShiftLength, neededRoles, shiftDate);
+            shifts.add(tempShift);
+        }
+
         //Create buttons and make everyother button a different color
         addRoleButton = new Button("Add Role");
         addRoleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
@@ -70,6 +89,12 @@ public class Scheduler {
         editRoleButton = new Button("Edit Role");
         editRoleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
         editRoleButton.setOnAction(e -> editRoleStage());
+        generateScheduleButton = new Button("Generate Schedule");
+        generateScheduleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
+        generateScheduleButton.setOnAction(e -> {
+            shiftEmployeeMap = generateSchedule(employees, shifts);
+            showWeek(dayOffset);
+        });
         previousWeekButton = new Button("Previous Week");
         previousWeekButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
         nextWeekButton = new Button("Next Week");
@@ -100,7 +125,7 @@ public class Scheduler {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         topMenu = new HBox(0);
-        topMenu.getChildren().addAll(saveButton, loadButton, addRoleButton, editRoleButton, addEmployeeButton, previousWeekButton, nextWeekButton, spacer);
+        topMenu.getChildren().addAll(addRoleButton, addEmployeeButton, saveButton, loadButton, editRoleButton, generateScheduleButton, previousWeekButton, nextWeekButton, spacer);
 
         showWeek(0);
 
@@ -126,6 +151,20 @@ public class Scheduler {
             button1.setMaxWidth(Double.MAX_VALUE);
             button1.setPrefHeight(40);
             grid.add(button1, i + 1, index + 1);
+
+            Shift shift = null;
+            Calendar calendar = Calendar.getInstance();
+            calendar.add(Calendar.DATE, i + dayOffset);
+            //check if employee has a shift using shiftEmployeeMap
+            if (shiftEmployeeMap.containsKey(employee)){
+                shift = shiftEmployeeMap.get(employee);
+            }
+
+
+            if (shift != null){
+                //button has start and end time of shift
+                button1.setText(shift.getStartTime().toString() + " - " + shift.getEndTime().toString());
+            }
 
             int finalI = i;
             button1.setOnAction(e -> {
@@ -212,12 +251,29 @@ public class Scheduler {
                     dayOfWeek = "Sat";
                     break;
             }
-            //Add the text to the grid
-            Text text = new Text(dayOfWeek + " " + (calendar.get(Calendar.MONTH) + 1) + "/" + (calendar.get(Calendar.DAY_OF_MONTH) +" "));
-            text.setStyle("-fx-font: 20 arial;");
-            //make the text scale 1/8 of the width of the screen
-            text.wrappingWidthProperty().bind(scene.widthProperty().divide(8));
-            grid.add(text, i + 1, 0);
+            //Add the button to the grid
+            Button button = new Button(dayOfWeek + " " + (calendar.get(Calendar.MONTH) + 1) + "/" + (calendar.get(Calendar.DAY_OF_MONTH) +" "));
+            button.setStyle("-fx-background-color: transparent; -fx-font: 20 arial;");
+            //scale the button to the size of the 1/8 of the screen
+            button.setPrefWidth(scene.getWidth() / 8);
+            Shift shift = null;
+            Calendar tempCalendar = Calendar.getInstance();
+            for (int j = 0; j < shifts.size(); j++){
+                //compare the day of shift to the day of the button
+                if (shifts.get(j).getShiftDate().get(Calendar.DAY_OF_YEAR) == calendar.get(Calendar.DAY_OF_YEAR)){
+                    shift = shifts.get(j);
+                    break;
+                }
+                tempCalendar.add(Calendar.DATE, 1);
+            }
+            if (shift == null){
+                throw new NullPointerException("Shift is null");
+            }
+            Shift finalShift = shift;
+            button.setOnAction(e -> {
+                editShift(finalShift);
+            });
+            grid.add(button, i + 1, 0);
             calendar.add(Calendar.DATE, 1);
         }
         //Add the employees to the grid
@@ -233,6 +289,19 @@ public class Scheduler {
             Stage subStage = new Stage();
             subStage.setTitle("Add Employee");
             ArrayList<Role> tempRoles = new ArrayList<>();
+            List<Availability> availability = new ArrayList<Availability>();
+
+            //check if employee is null, if not, get availability
+            if (employee != null){
+                availability = employee.getAvailability();
+            } else {
+                for (int i = 0; i < 7; i++){
+                    DayOfWeek dayOfWeek = DayOfWeek.of(i + 1);
+                    LocalTime start = LocalTime.of(0, 0);
+                    LocalTime end = LocalTime.of(23, 59);
+                    availability.add(new Availability(dayOfWeek, start, end));
+                }
+            }
 
             //Layout for the sub menu inputs.
             HBox firstNameLayout = new HBox(10);
@@ -256,31 +325,70 @@ public class Scheduler {
 
             Text hireDateText = new Text("Hire Date");
             TextArea hireDateTextArea = new TextArea();
+            hireDateTextArea.setText("0001-01-01");
             hireDateTextArea.setPrefHeight(20);
             hireDateTextArea.setPrefWidth(110);
 
             Text availabilityText = new Text("Availability");
-            TextArea availabilityTextArea = new TextArea();
-            availabilityTextArea.setPrefHeight(20);
-            availabilityTextArea.setPrefWidth(110);
+            //Availability has a drop down menu for the user to select the availability for each day of the week and a text area for the user to enter the beginning and end of the availability.
+            ComboBox<String> availabilityComboBox = new ComboBox<>();
+            //Add the days of the week to the drop down menu.
+            availabilityComboBox.getItems().addAll("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
+            availabilityComboBox.setPromptText("Select Day");
+            //two text areas for the beginning and end of the availability.
+            TextArea availabilityTextArea1 = new TextArea();
+            availabilityTextArea1.setPrefHeight(20);
+            availabilityTextArea1.setPrefWidth(110);
+            TextArea availabilityTextArea2 = new TextArea();
+            availabilityTextArea2.setPrefHeight(20);
+            availabilityTextArea2.setPrefWidth(110);
+
+            //add event handler for the drop down menu to add the availability to the day of the week unless no day is selected.
+            List<Availability> finalAvailability = availability;
+            availabilityComboBox.setOnAction(e -> {
+                //check if day is selected
+                try {
+                    if (availabilityComboBox.getValue() != null) {
+                        //get the day of the week
+                        DayOfWeek dayOfWeek = DayOfWeek.valueOf(availabilityComboBox.getValue().toUpperCase());
+                        //get the start and end times
+                        LocalTime start = LocalTime.parse(availabilityTextArea1.getText());
+                        LocalTime end = LocalTime.parse(availabilityTextArea2.getText());
+                        //create a new availability object
+                        Availability tempAvailability = new Availability(dayOfWeek, start, end);
+                        //add the availability to the list
+                        finalAvailability.set(dayOfWeek.getValue() - 1, tempAvailability);
+                    }
+                } catch (Exception ex){
+                    System.out.println("No day selected");
+                    //fill the text areas with the availability for the day selected
+                    DayOfWeek dayOfWeek = DayOfWeek.valueOf(availabilityComboBox.getValue().toUpperCase());
+                    availabilityTextArea1.setText(finalAvailability.get(dayOfWeek.getValue() - 1).getStartTime().toString());
+                    availabilityTextArea2.setText(finalAvailability.get(dayOfWeek.getValue() - 1).getEndTime().toString());
+                }
+            });
 
             Text preferencesText = new Text("Preferences");
             TextArea preferencesTextArea = new TextArea();
+            preferencesTextArea.setText("00:00");
             preferencesTextArea.setPrefHeight(20);
             preferencesTextArea.setPrefWidth(110);
 
             Text priorityText = new Text("Priority");
             TextArea priorityTextArea = new TextArea();
+            priorityTextArea.setText("1");
             priorityTextArea.setPrefHeight(20);
             priorityTextArea.setPrefWidth(110);
 
             Text maxDesiredHoursText = new Text("Maximum Desired Hours");
             TextArea maxDesiredHoursTextArea = new TextArea();
+            maxDesiredHoursTextArea.setText("40");
             maxDesiredHoursTextArea.setPrefHeight(20);
             maxDesiredHoursTextArea.setPrefWidth(110);
 
             Text maxText = new Text("Maximum Hours");
             TextArea maxTextArea = new TextArea();
+            maxTextArea.setText("40");
             maxTextArea.setPrefHeight(20);
             maxTextArea.setPrefWidth(110);
 
@@ -289,7 +397,6 @@ public class Scheduler {
                 firstNameTextArea.setText(employee.getFirstName());
                 lastNameTextArea.setText(employee.getLastName());
                 hireDateTextArea.setText(employee.getHireDate().toString());
-                availabilityTextArea.setText(String.valueOf(employee.getAvailability()));
                 maxTextArea.setText(String.valueOf(employee.getMaximumHours()));
             }
 
@@ -300,7 +407,7 @@ public class Scheduler {
             lastNameLayout.setAlignment(javafx.geometry.Pos.CENTER);
             hireDateLayout.getChildren().addAll(hireDateText, hireDateTextArea);
             hireDateLayout.setAlignment(javafx.geometry.Pos.CENTER);
-            availabilityLayout.getChildren().addAll(availabilityText, availabilityTextArea);
+            availabilityLayout.getChildren().addAll(availabilityText, availabilityComboBox, availabilityTextArea1, availabilityTextArea2);
             availabilityLayout.setAlignment(javafx.geometry.Pos.CENTER);
             preferencesLayout.getChildren().addAll(preferencesText, preferencesTextArea);
             preferencesLayout.setAlignment(javafx.geometry.Pos.CENTER);
@@ -310,6 +417,12 @@ public class Scheduler {
             maxHoursLayout.setAlignment(javafx.geometry.Pos.CENTER);
             maximumHoursLayout.getChildren().addAll(maxText, maxTextArea);
             maximumHoursLayout.setAlignment(javafx.geometry.Pos.CENTER);
+
+            if (employee != null){
+                for (int i = 0; i < employee.getAvailability().size(); i++){
+
+                }
+            }
 
             //Add the first and last name layouts to the main layout.
             VBox layout = new VBox(10);
@@ -345,19 +458,39 @@ public class Scheduler {
                 String firstName = firstNameTextArea.getText();
                 String lastName = lastNameTextArea.getText();
                 String hireDateString = hireDateTextArea.getText();
-                String availabilityString = availabilityTextArea.getText();
                 String preferencesString = preferencesTextArea.getText();
                 String priorityString = priorityTextArea.getText();
-                String maxDesiredHoursString = maxDesiredHoursTextArea.getText();
+                int maxDesiredHours = checkString(maxDesiredHoursTextArea.getText()) ? Integer.parseInt(maxDesiredHoursTextArea.getText()) : 40;
                 String maxString = maxTextArea.getText();
 
+                //check if the user selected a day of the week and if they did, get the start and end time of that day.
+                DayOfWeek dayOfWeek = null;
+                try {
+                    System.out.println("Availability box: " + availabilityComboBox.getValue().toString());
+                    dayOfWeek = DayOfWeek.valueOf(availabilityComboBox.getValue().toString().toUpperCase());
+                } catch (Exception ex) {
+                    System.out.println("No day of the week selected");
+                }
+                if (dayOfWeek != null) {
+                    String startTimeString = availabilityTextArea1.getText();
+                    String endTimeString = availabilityTextArea2.getText();
+                    LocalTime startTime = checkString(startTimeString) ? LocalTime.parse(startTimeString, DateTimeFormatter.ofPattern("HH:mm")) : LocalTime.of(0,0);
+                    LocalTime endTime = checkString(endTimeString) ? LocalTime.parse(endTimeString, DateTimeFormatter.ofPattern("HH:mm")) : LocalTime.of(23,59);
+                    int index = 0;
+                    for (int i = 0; i < finalAvailability.size(); i++) {
+                        if (finalAvailability.get(i).getDay().equals(dayOfWeek)) {
+                            index = i;
+                            break;
+                        }
+                    }
+                    finalAvailability.get(index).setStartTime(startTime);
+                    finalAvailability.get(index).setEndTime(endTime);
+                }
+
                 //Convert the user inputted string into a hire date with the format MM/DD/YYYY
-                LocalDate hireDate = checkString(hireDateString) ? LocalDate.parse(hireDateString, DateTimeFormatter.ofPattern("MM/dd/yyyy")) : LocalDate.of(1,1,1);
-                //Convert a user inputted string into a LocalTime with the format HH:MM
-                LocalTime availability = checkString(availabilityString) ? LocalTime.parse(availabilityString, DateTimeFormatter.ofPattern("HH:mm")) : LocalTime.of(0,0);
+                LocalDate hireDate = checkString(hireDateString) ? LocalDate.parse(hireDateString, DateTimeFormatter.ofPattern("yyyy-MM-dd")) : LocalDate.of(1,1,1);
                 LocalTime preferences = checkString(preferencesString) ? LocalTime.parse(preferencesString, DateTimeFormatter.ofPattern("HH:mm")) : LocalTime.of(0,0);
                 int priority = checkString(priorityString) ? Integer.parseInt(priorityString) : -1;
-                int maxDesiredHours = checkString(maxDesiredHoursString) ? Integer.parseInt(maxDesiredHoursString) : -1;
                 int max = checkString(maxString) ? Integer.parseInt(maxString) : -1;
 
 
@@ -366,7 +499,8 @@ public class Scheduler {
                     System.out.println("First or last name is blank");
                     return;
                 } else {
-                    editEmployee(firstName, lastName, tempRoles, hireDate, availability, max);
+                    //public Employee(String firstName, String lastName, int maxHours, LocalDate hireDate,List<Availability> availability, ArrayList<Role> roles)
+                    editEmployee(firstName, lastName, maxDesiredHours, hireDate, roles, finalAvailability);
                     subStage.close();
                     subMenuOpen = false;
                 }
@@ -408,7 +542,7 @@ public class Scheduler {
         return false;
     }
 
-    private void editEmployee(String first, String last, ArrayList<Role> tempList, LocalDate hire, LocalTime availability, int maxHours){
+    private void editEmployee(String first, String last, int maxHours, LocalDate hire, ArrayList<Role> tempList, List<Availability> availability){
         Employee employee = null;
         int id = tempId;
         if(sameIdEmployee(id) != -1){
@@ -416,13 +550,14 @@ public class Scheduler {
         }
         if (employee == null){
             System.out.println("Making new employee");
-            employee = new Employee(first, last, assignId(), maxHours, hire, availability);
+            employee = new Employee(first, last, maxHours, hire, availability, tempList, assignId());
             employee.setRoles(tempList);
             employees.add(employee);
             System.out.print("Employee created: " + employee.getFirstName() + " " + employee.getLastName() + " with ID " + employee.getId() + " and roles ");
             for (Role role : employee.getRoles()){
                 System.out.print(role.getName() + " ");
             }
+            System.out.print("and maxHours " + employee.getMaximumHours());
             System.out.println();
         } else {
             employee.setFirstName(first);
@@ -540,11 +675,6 @@ public class Scheduler {
         choiceBox.getItems().add("");
     }
 
-    private boolean choiceBoxesIsDeleted(ChoiceBox choiceBox){
-        //if choice equals blank then return true
-        return choiceBox.getValue().equals("");
-    }
-
     private Role getRole(String name){
         for (Role role : roles){
             if (role.getName().equals(name)){
@@ -569,10 +699,14 @@ public class Scheduler {
                 ChoiceBox newChoiceBox = new ChoiceBox();
                 choiceBoxesAddRoles(newChoiceBox);
                 //get submit button and remove it from the layout and add it back to the layout so it is at the bottom.
-                Button submitButton = (Button) layout.getChildren().get(layout.getChildren().size() - 1);
-                layout.getChildren().remove(submitButton);
-                layout.getChildren().add(newChoiceBox);
-                layout.getChildren().add(submitButton);
+                try {
+                    Button submitButton = (Button) layout.getChildren().get(layout.getChildren().size() - 1);
+                    layout.getChildren().remove(submitButton);
+                    layout.getChildren().add(newChoiceBox);
+                    layout.getChildren().add(submitButton);
+                } catch (Exception e){
+                    layout.getChildren().add(newChoiceBox);
+                }
                 choiceBoxes.add(newChoiceBox);
                 newChoiceBox.setOnAction(e -> choiceBoxEvent(newChoiceBox, choiceBoxes, tempRoles, layout));
             } else {
@@ -612,34 +746,145 @@ public class Scheduler {
         }
     }
 
-    public boolean checkString(String string) {
+    public void editShift(Shift shift){
+        if (!subMenuOpen){
+            tempId = -1;
+            Stage subStage = new Stage();
+            subStage.setTitle("Edit Shift");
+            VBox layout = new VBox(10);
+            layout.setAlignment(javafx.geometry.Pos.CENTER);
+            Button submitButton = new Button("Submit");
+
+            HBox timeBox = new HBox(10);
+            timeBox.setAlignment(javafx.geometry.Pos.CENTER);
+            Text dateText = new Text("Time");
+            TextArea startTimeTextArea = new TextArea(shift.getStartTime().toString());
+            startTimeTextArea.setPrefHeight(20);
+            startTimeTextArea.setPrefWidth(50);
+            TextArea endTimeTextArea = new TextArea(shift.getEndTime().toString());
+            endTimeTextArea.setPrefHeight(20);
+            endTimeTextArea.setPrefWidth(50);
+            timeBox.getChildren().addAll(dateText, startTimeTextArea, endTimeTextArea);
+
+            HBox minRequirements = new HBox(10);
+            minRequirements.setAlignment(javafx.geometry.Pos.CENTER);
+            Text requirementsText = new Text("Minimum Hours");
+            TextArea requirementsTextArea = new TextArea(String.valueOf(shift.getMinimumShiftLength()));
+            requirementsTextArea.setPrefHeight(20);
+            requirementsTextArea.setPrefWidth(50);
+            minRequirements.getChildren().addAll(requirementsText, requirementsTextArea);
+
+            HBox maxRequirements = new HBox(10);
+            maxRequirements.setAlignment(javafx.geometry.Pos.CENTER);
+            Text maxRequirementsText = new Text("Maximum Hours");
+            TextArea maxRequirementsTextArea = new TextArea(String.valueOf(shift.getMaximumShiftLength()));
+            maxRequirementsTextArea.setPrefHeight(20);
+            maxRequirementsTextArea.setPrefWidth(50);
+            maxRequirements.getChildren().addAll(maxRequirementsText, maxRequirementsTextArea);
+
+            layout.getChildren().addAll(timeBox, minRequirements, maxRequirements);
+
+            ArrayList<Role> tempRoles = new ArrayList<>();
+            ArrayList<ChoiceBox> choiceBoxes = new ArrayList<>();
+            for (int i = 0; i < shift.getNeededRoles().size(); i++){
+                ChoiceBox choiceBox = new ChoiceBox();
+                choiceBox.setValue(shift.getNeededRoles().get(i).getName());
+                choiceBoxesAddRoles(choiceBox);
+                choiceBox.setOnAction(e -> choiceBoxEvent(choiceBox, choiceBoxes, tempRoles, layout));
+                choiceBoxes.add(choiceBox);
+                tempRoles.add(shift.getNeededRoles().get(i));
+            }
+            ChoiceBox choiceBox = new ChoiceBox();
+            choiceBoxesAddRoles(choiceBox);
+            choiceBox.setOnAction(e -> choiceBoxEvent(choiceBox, choiceBoxes, tempRoles, layout));
+            choiceBoxes.add(choiceBox);
+
+            //Add the choice box to the main layout.
+            for (ChoiceBox choiceBox1 : choiceBoxes) {
+                layout.getChildren().add(choiceBox1);
+            }
+
+            layout.getChildren().add(submitButton);
+
+            //submit button event edits the shift
+            submitButton.setOnAction(e -> {
+                if (checkString(startTimeTextArea.getText()) && checkString(endTimeTextArea.getText()) && checkString(requirementsTextArea.getText()) && checkString(maxRequirementsTextArea.getText())) {
+                    LocalTime startTime = LocalTime.parse(startTimeTextArea.getText());
+                    LocalTime endTime = LocalTime.parse(endTimeTextArea.getText());
+                    int minRequirementsInt = Integer.parseInt(requirementsTextArea.getText());
+                    int maxRequirementsInt = Integer.parseInt(maxRequirementsTextArea.getText());
+
+                    shift.setStartTime(startTime);
+                    shift.setEndTime(endTime);
+                    shift.setMinimumShiftLength(minRequirementsInt);
+                    shift.setMaximumShiftLength(maxRequirementsInt);
+                    //covert tempRoles to strings
+                    shift.setNeededRoles(tempRoles);
+                    subStage.close();
+                }
+            });
+
+            //Set the scene and show the stage.
+            Scene scene = new Scene(layout, 500, 400);
+            subStage.setScene(scene);
+
+            //If the sub menu is closed, set the subMenuOpen to false.
+            subStage.addEventHandler(javafx.stage.WindowEvent.WINDOW_CLOSE_REQUEST, event -> {
+                subMenuOpen = false;
+            });
+
+            subStage.show();
+        }
+    }
+
+    private boolean checkString(String string) {
         if (string == null || string.isBlank()) {
             return false;
         }
         return true;
     }
-    public static Map<Shift, Employee> generateSchedule(List<Employee> employees, List<Shift> shifts) {
-        Map<Shift, Employee> schedule = new HashMap<>();
+
+    private boolean rolesMatch(ArrayList<Role> employeeRoles, ArrayList<Role> requiredRoles) {
+        for (Role role : requiredRoles) {
+            if (!employeeRoles.contains(role)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private Map<Employee, Shift> generateSchedule(List<Employee> employees, List<Shift> shifts) {
+        Map<Employee, Shift> schedule = new HashMap<>();
         List<Employee> availableEmployees = new ArrayList<>(employees);
         Collections.sort(availableEmployees);
 
         for (Shift shift : shifts) {
-            ArrayList<String> requiredRoles = shift.getneededRoles();
-            boolean shiftFilled = false;
+            ArrayList<Role> requiredRoles = shift.getNeededRoles();
+            Boolean shiftFilled = false;
 
-            for (Employee employee : availableEmployees) {
-                if (employee.isAvailable(shift.getShiftDay(), shift.getStartTime(), shift.getEndTime())
-                        && !(Collections.disjoint(employee.getRoles(), requiredRoles))
-                        && employee.getRemainingHours() >= shift.shiftLength()) {
-                    schedule.put(shift, employee);
-                    employee.setRemainingHours(employee.getRemainingHours() - shift.shiftLength());
-                    shiftFilled = true;
-                    break;
+            for (int i = 0; i < shift.getAmountOfEmployees(); i++) {
+                for (Employee employee : availableEmployees) {
+                    if (employee.isAvailable(shift.getShiftDay(), shift.getStartTime(), shift.getEndTime()) && rolesMatch(employee.getRoles(), requiredRoles) && employee.getRemainingHours() >= shift.shiftLength()) {
+                        schedule.put(employee, shift);
+                        employee.setRemainingHours(employee.getRemainingHours() - shift.shiftLength());
+                        shiftFilled = true;
+                        System.out.println("Shift filled: " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime() + " " + shift.getEndTime());
+                        break;
+                    } else {
+                        //Tell the user why the shift was not filled.
+                        if(!employee.isAvailable(shift.getShiftDay(), shift.getStartTime(), shift.getEndTime())){
+                            System.out.println("Employee is not available: " + employee.getId() + " " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime() + " " + shift.getEndTime());
+                        } else if(!rolesMatch(employee.getRoles(), requiredRoles)){
+                            System.out.println("Employee does not have required roles: " + employee.getId() + " " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime() + " " + shift.getEndTime());
+                        } else if(!(employee.getRemainingHours() >= shift.shiftLength())){
+                            System.out.println("Employee does not have enough hours: " + employee.getId() + " Shift: " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime() + " " + shift.getEndTime() + " Employee hours: " + employee.getRemainingHours() + " Shift hours: " + shift.shiftLength());
+                        }
+                    }
                 }
             }
 
             if (!shiftFilled) {
-                System.out.println("Unable to fill shift: " + shift.getShiftDay() + " " + shift.getStartTime() + " " + shift.getEndTime());
+                System.out.println("Unable to fill shift: " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime() + " " + shift.getEndTime());
             }
         }
 

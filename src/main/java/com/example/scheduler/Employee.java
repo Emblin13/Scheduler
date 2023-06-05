@@ -32,14 +32,22 @@ public class Employee implements Comparable<Employee> {
         this.maximumHours = maxHours;
         this.hireDate = hireDate;
         this.availability = availability;
-        this.remainingHours = maximumHours;
+        remainingHours = maxHours;
 
         System.out.println(String.format("Employee %s %s created", this.firstName, this.lastName));
     }
 
+    public int getRemainingHours() {
+        return remainingHours;
+    }
+
+    public void setRemainingHours(int hours) {
+        remainingHours = hours;
+    }
+
     //Employee Constructor with Roles
     public Employee(final String firstName, final String lastName, final int maxHours, final LocalDate hireDate,
-                    final List<Availability> availability, ArrayList<Role> roles) {
+                    final List<Availability> availability, ArrayList<Role> roles, int id) {
         this.firstName = firstName;
         this.lastName = lastName;
         capitalizeName();
@@ -47,6 +55,8 @@ public class Employee implements Comparable<Employee> {
         this.hireDate = hireDate;
         this.availability = availability;
         this.roles = roles;
+        this.id = id;
+        remainingHours = maxHours;
         System.out.println(String.format("Employee %s %s created", this.firstName, this.lastName));
     }
 
@@ -110,6 +120,7 @@ public class Employee implements Comparable<Employee> {
     }
 
     public void setMaximumHours(int maximumHours) {
+        //System.out.println(String.format("Maximum hours for %s %s set to %d", this.firstName, this.lastName, maximumHours));
         this.maximumHours = maximumHours;
     }
     public LocalDate getHireDate() {
@@ -118,17 +129,11 @@ public class Employee implements Comparable<Employee> {
     public void setHireDate(LocalDate hireDate) {
         this.hireDate = hireDate;
     }
-    public int getRemainingHours() {
-        return remainingHours;
-    }
 
-    public void setRemainingHours(int remainingHours) {
-        this.remainingHours = remainingHours;
-    }
     public boolean isAvailable(DayOfWeek day, LocalTime startTime, LocalTime endTime) {
         // Check if employee is available on the given day and within the shift time range
-        for (Availability avail : availability) {
-            if (avail.getDay() == day && avail.getStartTime().isBefore(endTime) && avail.getEndTime().isAfter(startTime)) {
+        for (Availability a : availability) {
+            if (a.getDay() == day && (a.getStartTime().isBefore(startTime) || a.getStartTime().equals(startTime)) && (a.getEndTime().isAfter(endTime) || a.getEndTime().equals(endTime))) {
                 return true;
             }
         }

@@ -22,6 +22,14 @@ public class Availability {
         return startTime;
     }
 
+    public void setStartTime(LocalTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public void setEndTime(LocalTime endTime) {
+        this.endTime = endTime;
+    }
+
     public LocalTime getEndTime() {
         return endTime;
     }

@@ -3,6 +3,7 @@ package com.example.scheduler;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 public class Shift
 {
@@ -11,19 +12,31 @@ public class Shift
     private int minimumShiftLength;
     private int maximumShiftLength;
     private DayOfWeek shiftDay;
-    private ArrayList<String> neededRoles;
-    //private Employee employee; don't need employee reference here
+    private Calendar shiftDate;
+    private ArrayList<Role> neededRoles;
     private boolean onCall;
+    private boolean isFilled = false;
+    private int amountOfEmployees = 1;
 
-    public Shift(final DayOfWeek shiftDay, final LocalTime startTime, final LocalTime endTime, final int minimumShiftLength,
-                 final int maximumShiftLength, final ArrayList<String> neededRoles, final Employee employee)
-    {
+    public Shift(final DayOfWeek shiftDay, final LocalTime startTime, final LocalTime endTime, final int minimumShiftLength, final int maximumShiftLength, final ArrayList<Role> neededRoles, Calendar shiftDate) {
         this.shiftDay = shiftDay;
         this.startTime = startTime;
         this.endTime = endTime;
         this.minimumShiftLength = minimumShiftLength;
         this.maximumShiftLength = maximumShiftLength;
         this.neededRoles = neededRoles;
+        this.shiftDate = shiftDate;
+    }
+
+    public Shift(final DayOfWeek shiftDay, final LocalTime startTime, final LocalTime endTime, final int minimumShiftLength, final int maximumShiftLength, final ArrayList<Role> neededRoles, Calendar shiftDate, int amountOfEmployees) {
+        this.shiftDay = shiftDay;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.minimumShiftLength = minimumShiftLength;
+        this.maximumShiftLength = maximumShiftLength;
+        this.neededRoles = neededRoles;
+        this.shiftDate = shiftDate;
+        this.amountOfEmployees = amountOfEmployees;
     }
 
     public LocalTime getStartTime()
@@ -75,13 +88,11 @@ public class Shift
         this.maximumShiftLength = maximumShiftLength;
     }
 
-    public ArrayList<String> getneededRoles()
-    {
+    public ArrayList<Role> getNeededRoles() {
         return neededRoles;
     }
 
-    public void setneededRoles(ArrayList<String> neededRoles)
-    {
+    public void setNeededRoles(ArrayList<Role> neededRoles) {
         this.neededRoles = neededRoles;
     }
 
@@ -94,7 +105,17 @@ public class Shift
     {
         this.onCall = onCall;
     }
+
     public int shiftLength() {
-        return (int) startTime.until(endTime, java.time.temporal.ChronoUnit.HOURS);
+        //Return the length of the shift in hours
+        return endTime.getHour() - startTime.getHour();
+    }
+
+    public int getAmountOfEmployees() {
+        return amountOfEmployees;
+    }
+
+    public Calendar getShiftDate() {
+        return shiftDate;
     }
 }
