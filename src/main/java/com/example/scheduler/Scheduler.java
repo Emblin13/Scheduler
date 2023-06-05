@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class Scheduler {
@@ -331,6 +332,7 @@ public class Scheduler {
 
             //add event handler for the drop down menu to add the availability to the day of the week unless no day is selected.
             List<Availability> finalAvailability = availability;
+            AtomicInteger currentDay = new AtomicInteger();
             availabilityComboBox.setOnAction(e -> {
                 //check if day is selected
                 try {
@@ -343,7 +345,12 @@ public class Scheduler {
                         //create a new availability object
                         Availability tempAvailability = new Availability(dayOfWeek, start, end);
                         //add the availability to the list
-                        finalAvailability.set(dayOfWeek.getValue() - 1, tempAvailability);
+                        System.out.println("Day: " + currentDay + " Start: " + start + " End: " + end);
+                        finalAvailability.set(currentDay.get(), tempAvailability);
+                        //fill the text areas with the availability for the day selected
+                        currentDay.set(dayOfWeek.getValue() - 1);
+                        availabilityTextArea1.setText(finalAvailability.get(dayOfWeek.getValue() - 1).getStartTime().toString());
+                        availabilityTextArea2.setText(finalAvailability.get(dayOfWeek.getValue() - 1).getEndTime().toString());
                     }
                 } catch (Exception ex){
                     System.out.println("No day selected");
@@ -351,6 +358,7 @@ public class Scheduler {
                     DayOfWeek dayOfWeek = DayOfWeek.valueOf(availabilityComboBox.getValue().toUpperCase());
                     availabilityTextArea1.setText(finalAvailability.get(dayOfWeek.getValue() - 1).getStartTime().toString());
                     availabilityTextArea2.setText(finalAvailability.get(dayOfWeek.getValue() - 1).getEndTime().toString());
+                    currentDay.set(dayOfWeek.getValue() - 1);
                 }
             });
 
@@ -435,27 +443,17 @@ public class Scheduler {
                 String maxString = maxTextArea.getText();
 
                 //check if the user selected a day of the week and if they did, get the start and end time of that day.
-                DayOfWeek dayOfWeek = null;
-                try {
-                    System.out.println("Availability box: " + availabilityComboBox.getValue().toString());
-                    dayOfWeek = DayOfWeek.valueOf(availabilityComboBox.getValue().toString().toUpperCase());
-                } catch (Exception ex) {
-                    System.out.println("No day of the week selected");
-                }
-                if (dayOfWeek != null) {
-                    String startTimeString = availabilityTextArea1.getText();
-                    String endTimeString = availabilityTextArea2.getText();
-                    LocalTime startTime = checkString(startTimeString) ? LocalTime.parse(startTimeString, DateTimeFormatter.ofPattern("HH:mm")) : LocalTime.of(0,0);
-                    LocalTime endTime = checkString(endTimeString) ? LocalTime.parse(endTimeString, DateTimeFormatter.ofPattern("HH:mm")) : LocalTime.of(23,59);
-                    int index = 0;
-                    for (int i = 0; i < finalAvailability.size(); i++) {
-                        if (finalAvailability.get(i).getDay().equals(dayOfWeek)) {
-                            index = i;
-                            break;
-                        }
-                    }
-                    finalAvailability.get(index).setStartTime(startTime);
-                    finalAvailability.get(index).setEndTime(endTime);
+                if(availabilityComboBox.getValue() != ""){
+                    //get the day of the week
+                    DayOfWeek dayOfWeek = DayOfWeek.valueOf(availabilityComboBox.getValue().toUpperCase());
+                    //get the start and end times
+                    LocalTime start = LocalTime.parse(availabilityTextArea1.getText());
+                    LocalTime end = LocalTime.parse(availabilityTextArea2.getText());
+                    //create a new availability object
+                    Availability tempAvailability = new Availability(dayOfWeek, start, end);
+                    //add the availability to the list
+                    System.out.println("Day: " + currentDay + " Start: " + start + " End: " + end);
+                    finalAvailability.set(currentDay.get(), tempAvailability);
                 }
 
                 //Convert the user inputted string into a hire date with the format MM/DD/YYYY
