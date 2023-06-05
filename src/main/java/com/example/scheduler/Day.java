@@ -4,15 +4,18 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 
 public class Day {
+    //Day attributes
     private ArrayList shiftArrayList;
 
     private LocalTime[] workingHours;
 
+    //Day constructor
     public Day(ArrayList shiftArrayList, LocalTime[] workingHours) {
         this.shiftArrayList = shiftArrayList;
         this.workingHours = workingHours;
     }
 
+    //Getters and setters
     public ArrayList getShiftArrayList() {
         return shiftArrayList;
     }

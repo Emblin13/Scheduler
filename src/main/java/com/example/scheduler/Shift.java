@@ -1,7 +1,9 @@
 package com.example.scheduler;
 
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 public class Shift
 {
@@ -9,19 +11,39 @@ public class Shift
     private LocalTime endTime;
     private int minimumShiftLength;
     private int maximumShiftLength;
-    private ArrayList<String> role;
-    private Employee employee;
-    private boolean onCall;
+    private DayOfWeek shiftDay;
+    private Calendar shiftDate;
+    private ArrayList<Role> neededRoles;
+    private boolean isFilled = false;
+    private int EmployeeID = -1;
 
-    public Shift(final LocalTime startTime, final LocalTime endTime, final int minimumShiftLength,
-                 final int maximumShiftLength, final ArrayList<String> role, final Employee employee)
-    {
+    public Shift(final DayOfWeek shiftDay, final LocalTime startTime, final LocalTime endTime, final int minimumShiftLength, final int maximumShiftLength, final ArrayList<Role> neededRoles, Calendar shiftDate) {
+        this.shiftDay = shiftDay;
         this.startTime = startTime;
         this.endTime = endTime;
         this.minimumShiftLength = minimumShiftLength;
         this.maximumShiftLength = maximumShiftLength;
-        this.role = role;
-        this.employee = employee;
+        this.neededRoles = neededRoles;
+        this.shiftDate = shiftDate;
+    }
+
+    //To string method
+    public String toString() {
+        String holder = "";
+        holder += shiftDay + " " + startTime + " " + endTime + " " + minimumShiftLength + " " + maximumShiftLength + " ^";
+        for (int i = 0; i < neededRoles.size(); i++) {
+            holder += neededRoles.get(i).getName() + "^";
+        }
+        holder += shiftDate.get(Calendar.DAY_OF_YEAR) + " " + EmployeeID;
+        return holder;
+    }
+
+    public void setEmployeeID(int EmployeeID) {
+        this.EmployeeID = EmployeeID;
+    }
+
+    public int getEmployeeID() {
+        return EmployeeID;
     }
 
     public LocalTime getStartTime()
@@ -42,6 +64,15 @@ public class Shift
     public void setEndTime(LocalTime endTime)
     {
         this.endTime = endTime;
+    }
+    public DayOfWeek getShiftDay()
+    {
+        return shiftDay;
+    }
+
+    public void setShiftDay(DayOfWeek shiftDay)
+    {
+        this.shiftDay = shiftDay;
     }
 
     public int getMinimumShiftLength()
@@ -64,33 +95,20 @@ public class Shift
         this.maximumShiftLength = maximumShiftLength;
     }
 
-    public ArrayList<String> getRole()
-    {
-        return role;
+    public ArrayList<Role> getNeededRoles() {
+        return neededRoles;
     }
 
-    public void setRole(ArrayList<String> role)
-    {
-        this.role = role;
+    public void setNeededRoles(ArrayList<Role> neededRoles) {
+        this.neededRoles = neededRoles;
     }
 
-    public Employee getEmployee()
-    {
-        return employee;
+    public int shiftLength() {
+        //Return the length of the shift in hours
+        return endTime.getHour() - startTime.getHour();
     }
 
-    public void setEmployee(Employee employee)
-    {
-        this.employee = employee;
-    }
-
-    public boolean isOnCall()
-    {
-        return onCall;
-    }
-
-    public void setOnCall(boolean onCall)
-    {
-        this.onCall = onCall;
+    public Calendar getShiftDate() {
+        return shiftDate;
     }
 }
