@@ -173,31 +173,20 @@ public class Scheduler {
     private void editSchedule(Employee employee, int dayOffset){
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DATE, dayOffset);
-        System.out.println("Edit schedule of " + employee.getFirstName() + " " + employee.getLastName()+ " on " + calendar.getTime());
-
-        if (!subMenuOpen){
-            Stage subStage = new Stage();
-            subStage.setTitle("Edit Schedule");
-            //Add text to the top of the window telling the user the name of the employee and the date they are editing. Don't include the time.
-            Text text = new Text("Edit schedule of " + employee.getFirstName() + " " + employee.getLastName()+ " on " + (calendar.get(Calendar.MONTH) + 1) + "/" + calendar.get(Calendar.DATE));
-            text.setFont(Font.font("Verdana", FontWeight.BOLD, 20));
-            text.setTextAlignment(TextAlignment.CENTER);
-
-            VBox layout = new VBox(10);
-            layout.getChildren().add(text);
-
-            //Set the scene and show the stage.
-            Scene scene = new Scene(layout, 500, 400);
-            subStage.setScene(scene);
-
-            //If the sub menu is closed, set the subMenuOpen to false.
-            subStage.addEventHandler(javafx.stage.WindowEvent.WINDOW_CLOSE_REQUEST, event -> {
-                subMenuOpen = false;
-            });
-
-            subStage.show();
-        }
-
+        DayOfWeek dayOfWeek = DayOfWeek.of(calendar.get(Calendar.DAY_OF_WEEK));
+        LocalTime startTime = LocalTime.of(0, 0);
+        LocalTime endTime = LocalTime.of(23, 59);
+        int minimumShiftLength = 0;
+        int maximumShiftLength = 24;
+        ArrayList<Role> neededRoles = new ArrayList<Role>();
+        Calendar shiftDate = calendar;
+        //public Shift(DayOfWeek shiftDay, LocalTime startTime, LocalTime endTime, int minimumShiftLength, int maximumShiftLength, ArrayList<String> neededRoles, Calendar shiftDate)
+        Shift tempShift = new Shift(dayOfWeek, startTime, endTime, minimumShiftLength, maximumShiftLength, neededRoles, shiftDate);
+        tempShift.setEmployeeID(employee.getId());
+        System.out.println("Adding shift to " + employee.getFirstName() + " " + employee.getLastName());
+        this.shifts.add(tempShift);
+        subMenuOpen = false;
+        editShift(tempShift);
     }
 
     private void showWeek(int mod){
@@ -796,9 +785,19 @@ public class Scheduler {
                     shift.setMaximumShiftLength(maxRequirementsInt);
                     //covert tempRoles to strings
                     shift.setNeededRoles(tempRoles);
+                    showWeek(dayOffset);
                     subStage.close();
                 }
             });
+
+            //delete button
+            Button deleteButton = new Button("Delete");
+            deleteButton.setOnAction(e -> {
+                shifts.remove(shift);
+                showWeek(dayOffset);
+                subStage.close();
+            });
+            layout.getChildren().add(deleteButton);
 
             //Set the scene and show the stage.
             Scene scene = new Scene(layout, 500, 400);
@@ -806,6 +805,7 @@ public class Scheduler {
 
             //If the sub menu is closed, set the subMenuOpen to false.
             subStage.addEventHandler(javafx.stage.WindowEvent.WINDOW_CLOSE_REQUEST, event -> {
+                showWeek(dayOffset);
                 subMenuOpen = false;
             });
 
