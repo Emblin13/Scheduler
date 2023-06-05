@@ -13,6 +13,8 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -36,6 +38,8 @@ public class Scheduler {
     //Boolean to keep track of if the sub menu is open or not
     Boolean subMenuOpen = false;
     Map<Employee, Shift> shiftEmployeeMap = new HashMap<Employee, Shift>();
+    Saver saver = new Saver();
+    Reader reader = new Reader();
 
     //buttons
     private Button addRoleButton;
@@ -61,9 +65,9 @@ public class Scheduler {
         this.stage = stage;
         stage.setTitle("Scheduler");
 
-        for (int i = 0; i < 24; i++) {
+        for (int i = 0; i < 28; i++) {
             Calendar cal = Calendar.getInstance();
-            cal.add(Calendar.DATE, i);
+            cal.add(Calendar.DAY_OF_YEAR, i);
             DayOfWeek dayOfWeek = DayOfWeek.of(cal.get(Calendar.DAY_OF_WEEK));
             LocalTime startTime = LocalTime.of(0, 0);
             LocalTime endTime = LocalTime.of(23, 59);
@@ -84,15 +88,17 @@ public class Scheduler {
         addEmployeeButton.setOnAction(e -> employeeStage(null));
         saveButton = new Button("Save");
         saveButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
+        saveButton.setOnAction(e -> save());
         loadButton = new Button("Load");
         loadButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
+        loadButton.setOnAction(e -> load());
         editRoleButton = new Button("Edit Role");
         editRoleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
         editRoleButton.setOnAction(e -> editRoleStage());
         generateScheduleButton = new Button("Generate Schedule");
         generateScheduleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
         generateScheduleButton.setOnAction(e -> {
-            shiftEmployeeMap = generateSchedule(employees, shifts);
+            generateSchedule();
             showWeek(dayOffset);
         });
         previousWeekButton = new Button("Previous Week");
@@ -155,21 +161,26 @@ public class Scheduler {
             Shift shift = null;
             Calendar calendar = Calendar.getInstance();
             calendar.add(Calendar.DATE, i + dayOffset);
-            //check if employee has a shift using shiftEmployeeMap
-            if (shiftEmployeeMap.containsKey(employee)){
-                shift = shiftEmployeeMap.get(employee);
+            for(Shift holder: shifts){
+                if (holder.getShiftDate().get(Calendar.DAY_OF_YEAR) == calendar.get(Calendar.DAY_OF_YEAR) && holder.getEmployeeID() == employee.getId()){
+                    shift = holder;
+                }
             }
-
 
             if (shift != null){
-                //button has start and end time of shift
                 button1.setText(shift.getStartTime().toString() + " - " + shift.getEndTime().toString());
+                Shift finalShift = shift;
+                button1.setOnAction(e -> {
+                    editShift(finalShift);
+                });
+            } else {
+                button1.setText("Add Shift");
+                int finalI = i;
+                button1.setOnAction(e -> {
+                    editSchedule(employee, finalI + dayOffset);
+                });
             }
 
-            int finalI = i;
-            button1.setOnAction(e -> {
-                editSchedule(employee, finalI);
-            });
         }
     }
 
@@ -256,22 +267,10 @@ public class Scheduler {
             button.setStyle("-fx-background-color: transparent; -fx-font: 20 arial;");
             //scale the button to the size of the 1/8 of the screen
             button.setPrefWidth(scene.getWidth() / 8);
-            Shift shift = null;
-            Calendar tempCalendar = Calendar.getInstance();
-            for (int j = 0; j < shifts.size(); j++){
-                //compare the day of shift to the day of the button
-                if (shifts.get(j).getShiftDate().get(Calendar.DAY_OF_YEAR) == calendar.get(Calendar.DAY_OF_YEAR)){
-                    shift = shifts.get(j);
-                    break;
-                }
-                tempCalendar.add(Calendar.DATE, 1);
-            }
-            if (shift == null){
-                throw new NullPointerException("Shift is null");
-            }
-            Shift finalShift = shift;
+            //create a copy of the calendar to use in the lambda expression
+            Calendar finalCalendar = (Calendar) calendar.clone();
             button.setOnAction(e -> {
-                editShift(finalShift);
+                dayShifts(finalCalendar);
             });
             grid.add(button, i + 1, 0);
             calendar.add(Calendar.DATE, 1);
@@ -418,12 +417,6 @@ public class Scheduler {
             maximumHoursLayout.getChildren().addAll(maxText, maxTextArea);
             maximumHoursLayout.setAlignment(javafx.geometry.Pos.CENTER);
 
-            if (employee != null){
-                for (int i = 0; i < employee.getAvailability().size(); i++){
-
-                }
-            }
-
             //Add the first and last name layouts to the main layout.
             VBox layout = new VBox(10);
             layout.getChildren().addAll(firstNameLayout, lastNameLayout, hireDateLayout, availabilityLayout, preferencesLayout, priorityLayout, maxHoursLayout, maximumHoursLayout);
@@ -500,7 +493,7 @@ public class Scheduler {
                     return;
                 } else {
                     //public Employee(String firstName, String lastName, int maxHours, LocalDate hireDate,List<Availability> availability, ArrayList<Role> roles)
-                    editEmployee(firstName, lastName, maxDesiredHours, hireDate, roles, finalAvailability);
+                    editEmployee(firstName, lastName, maxDesiredHours, hireDate, tempRoles, finalAvailability);
                     subStage.close();
                     subMenuOpen = false;
                 }
@@ -844,54 +837,146 @@ public class Scheduler {
         return true;
     }
 
-    private boolean rolesMatch(ArrayList<Role> employeeRoles, ArrayList<Role> requiredRoles) {
-        for (Role role : requiredRoles) {
-            if (!employeeRoles.contains(role)) {
-                return false;
-            }
-        }
-        return true;
-    }
+    private void dayShifts(Calendar calendar){
+        if (!subMenuOpen) {
+            System.out.println("Showing shifts for: "+calendar.get(Calendar.DAY_OF_YEAR));
+            subMenuOpen = true;
+            Stage subStage = new Stage();
+            subStage.setTitle("Edit Shift");
+            VBox layout = new VBox(10);
+            layout.setAlignment(javafx.geometry.Pos.CENTER);
+            Button addButton = new Button("Add Shift");
 
-    private Map<Employee, Shift> generateSchedule(List<Employee> employees, List<Shift> shifts) {
-        Map<Employee, Shift> schedule = new HashMap<>();
-        List<Employee> availableEmployees = new ArrayList<>(employees);
-        Collections.sort(availableEmployees);
-
-        for (Shift shift : shifts) {
-            ArrayList<Role> requiredRoles = shift.getNeededRoles();
-            Boolean shiftFilled = false;
-
-            for (int i = 0; i < shift.getAmountOfEmployees(); i++) {
-                for (Employee employee : availableEmployees) {
-                    if (employee.isAvailable(shift.getShiftDay(), shift.getStartTime(), shift.getEndTime()) && rolesMatch(employee.getRoles(), requiredRoles) && employee.getRemainingHours() >= shift.shiftLength()) {
-                        schedule.put(employee, shift);
-                        employee.setRemainingHours(employee.getRemainingHours() - shift.shiftLength());
-                        shiftFilled = true;
-                        System.out.println("Shift filled: " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime() + " " + shift.getEndTime());
-                        break;
-                    } else {
-                        //Tell the user why the shift was not filled.
-                        if(!employee.isAvailable(shift.getShiftDay(), shift.getStartTime(), shift.getEndTime())){
-                            System.out.println("Employee is not available: " + employee.getId() + " " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime() + " " + shift.getEndTime());
-                        } else if(!rolesMatch(employee.getRoles(), requiredRoles)){
-                            System.out.println("Employee does not have required roles: " + employee.getId() + " " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime() + " " + shift.getEndTime());
-                        } else if(!(employee.getRemainingHours() >= shift.shiftLength())){
-                            System.out.println("Employee does not have enough hours: " + employee.getId() + " Shift: " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime() + " " + shift.getEndTime() + " Employee hours: " + employee.getRemainingHours() + " Shift hours: " + shift.shiftLength());
-                        }
-                    }
+            ArrayList<Shift> shifts = new ArrayList<>();
+            for (Shift shift : this.shifts) {
+                if (shift.getShiftDate().get(Calendar.DAY_OF_YEAR) == calendar.get(Calendar.DAY_OF_YEAR)) {
+                    shifts.add(shift);
+                    System.out.println("Showing shift: "+shift.getStartTime().toString() + " - " + shift.getEndTime().toString());
                 }
             }
 
-            if (!shiftFilled) {
-                System.out.println("Unable to fill shift: " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime() + " " + shift.getEndTime());
+            //Show a button for each shift and a button to add a shift.
+            for (Shift shift : shifts) {
+                Button shiftButton = new Button(shift.getStartTime().toString() + " - " + shift.getEndTime().toString());
+                shiftButton.setOnAction(e -> {
+                    subMenuOpen = false;
+                    subStage.close();
+                    editShift(shift);
+                });
+                shiftButton.setPrefWidth(200);
+                shiftButton.setPrefHeight(50);
+                shiftButton.setAlignment(javafx.geometry.Pos.CENTER);
+                shiftButton.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #000000; -fx-border-width: 1px;");
+                layout.getChildren().add(shiftButton);
+            }
+
+            addButton.setOnAction(e -> {
+                DayOfWeek dayOfWeek = DayOfWeek.of(calendar.get(Calendar.DAY_OF_WEEK));
+                LocalTime startTime = LocalTime.of(0, 0);
+                LocalTime endTime = LocalTime.of(23, 59);
+                int minimumShiftLength = 0;
+                int maximumShiftLength = 24;
+                ArrayList<Role> neededRoles = new ArrayList<Role>();
+                Calendar shiftDate = calendar;
+                //public Shift(DayOfWeek shiftDay, LocalTime startTime, LocalTime endTime, int minimumShiftLength, int maximumShiftLength, ArrayList<String> neededRoles, Calendar shiftDate)
+                Shift tempShift = new Shift(dayOfWeek, startTime, endTime, minimumShiftLength, maximumShiftLength, neededRoles, shiftDate);
+                this.shifts.add(tempShift);
+                subStage.close();
+                subMenuOpen = false;
+                editShift(tempShift);
+            });
+            addButton.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #000000; -fx-border-width: 1px;");
+            layout.getChildren().add(addButton);
+
+            //Set the scene and show the stage.
+            Scene scene = new Scene(layout, 500, 400);
+            subStage.setScene(scene);
+
+            //If the sub menu is closed, set the subMenuOpen to false.
+            subStage.addEventHandler(javafx.stage.WindowEvent.WINDOW_CLOSE_REQUEST, event -> {
+                subMenuOpen = false;
+            });
+
+            subStage.show();
+        }
+    }
+
+    private boolean rolesMatch(ArrayList<Role> employeeRoles, ArrayList<Role> requiredRoles) {
+        for (int i = 0; i < requiredRoles.size(); i++) {
+            for (int j = 0; j < employeeRoles.size(); j++) {
+                if (requiredRoles.get(i).getName().equals(employeeRoles.get(j).getName())) {
+                    return true;
+                }
             }
         }
-
-        return schedule;
+        return false;
     }
-    public static Availability createAvailability(DayOfWeek day, LocalTime startTime, LocalTime endTime) {
+
+    private void generateSchedule() {
+        //set all shifts to unassigned
+        for (Shift shift : shifts) {
+            shift.setEmployeeID(-1);
+        }
+        Calendar calendar = Calendar.getInstance();
+        for (int i = 0; i < 28; i++){
+            int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+            ArrayList<Shift> shiftsForDay = new ArrayList<>();
+            ArrayList<Employee> employeesForDay = new ArrayList<>();
+            for (Shift shift : shifts) {
+                if (shift.getShiftDate().get(Calendar.DAY_OF_YEAR) == calendar.get(Calendar.DAY_OF_YEAR)) {
+                    shiftsForDay.add(shift);
+                }
+            }
+            for (Employee employee : employees) {
+                if (employee.getAvailability().get(dayOfWeek-1).getTotalHours() > 0) {
+                    employeesForDay.add(employee);
+                }
+            }
+            for (Shift shift : shiftsForDay) {
+                for (Employee employee : employeesForDay) {
+                    Availability availability = employee.getAvailability().get(dayOfWeek-1);
+                    //Check if the employee has the required roles and is available for the entire shift by checking if the start time is before or equal to the shift start time and the end time is after or equal to the shift end time.
+                    if (rolesMatch(employee.getRoles(), shift.getNeededRoles()) && (availability.getStartTime().isBefore(shift.getStartTime()) || availability.getStartTime().toString().equals(shift.getStartTime().toString())) && ((availability.getEndTime().isAfter(shift.getEndTime())) || availability.getEndTime().toString().equals(shift.getEndTime().toString()))){
+                        shift.setEmployeeID(employee.getId());
+                        employeesForDay.remove(employee);
+                        System.out.println("Assigned shift: " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime().toString() + " - " + shift.getEndTime().toString() + " to employee: "+ employee.getFirstName() + " " + employee.getLastName() + " with ID: " + employee.getId());
+                        break;
+                    } else {
+                        System.out.println("Could not assign shift: " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + shift.getStartTime().toString() + " - " + shift.getEndTime().toString() + " to employee: "+ employee.getFirstName() + " " + employee.getLastName() + " with ID: " + employee.getId());
+                    }
+                }
+            }
+            calendar.add(Calendar.DAY_OF_YEAR, 1);
+        }
+        showWeek(dayOffset);
+    }
+
+    public Availability createAvailability(DayOfWeek day, LocalTime startTime, LocalTime endTime) {
         return new Availability(day, startTime, endTime);
     }
+
+    private void save(){
+        Saver saver = new Saver();
+        try {
+            saver.save(employees, new File("employees.txt"));
+            saver.save(shifts, new File("shifts.txt"));
+            saver.save(roles, new File("roles.txt"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void load(){
+        Reader reader = new Reader();
+        try {
+            roles = reader.readRoles(new File("roles.txt"));
+            employees = reader.readEmployees(new File("employees.txt"));
+            shifts = reader.readShifts(new File("shifts.txt"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        start(stage);
+    }
+
 }
 

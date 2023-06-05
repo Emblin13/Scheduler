@@ -36,5 +36,9 @@ public class Availability {
     public LocalTime getEndTime() {
         return endTime;
     }
+
+    public int getTotalHours(){
+        return endTime.getHour() - startTime.getHour();
+    }
 } //end availability class
 
