@@ -19,7 +19,6 @@ public class Employee implements Comparable<Employee> {
     private int maximumHours;
     private int remainingHours;
 
-<<<<<<< Updated upstream
     //Employee Constructor
     public Employee(final String firstName, final String lastName, int id, final int maxHours, final LocalDate hireDate,
                     final List<Availability> availability) {
@@ -33,14 +32,11 @@ public class Employee implements Comparable<Employee> {
         remainingHours = maxHours;
 
         System.out.println(String.format("Employee %s %s created", this.firstName, this.lastName));
-=======
-    public int getRemainingHours() {
-        return remainingHours;
+
     }
 
     public void setRemainingHours(int hours) {
         remainingHours = hours;
->>>>>>> Stashed changes
     }
 
     //Employee Constructor with Roles
@@ -58,15 +54,10 @@ public class Employee implements Comparable<Employee> {
         System.out.println(String.format("Employee %s %s created", this.firstName, this.lastName));
     }
 
-<<<<<<< Updated upstream
     //Getters and setters
     public int getRemainingHours() {
         return remainingHours;
     }
-
-    public void setRemainingHours(int hours) {
-        remainingHours = hours;
-=======
     //To String method
     @Override
     public String toString() {
@@ -81,7 +72,6 @@ public class Employee implements Comparable<Employee> {
         }
         avail += String.format(" %d", this.id);
         return avail;
->>>>>>> Stashed changes
     }
 
     public String getFirstName(){
