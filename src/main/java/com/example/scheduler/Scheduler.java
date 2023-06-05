@@ -309,7 +309,9 @@ public class Scheduler {
 
             Text hireDateText = new Text("Hire Date");
             TextArea hireDateTextArea = new TextArea();
-            hireDateTextArea.setText("0001-01-01");
+            LocalDate date = LocalDate.now();
+            //set the hire date to the current date.
+            hireDateTextArea.setText(date.toString());
             hireDateTextArea.setPrefHeight(20);
             hireDateTextArea.setPrefWidth(110);
 
@@ -352,12 +354,6 @@ public class Scheduler {
                 }
             });
 
-            Text preferencesText = new Text("Preferences");
-            TextArea preferencesTextArea = new TextArea();
-            preferencesTextArea.setText("00:00");
-            preferencesTextArea.setPrefHeight(20);
-            preferencesTextArea.setPrefWidth(110);
-
             Text priorityText = new Text("Priority");
             TextArea priorityTextArea = new TextArea();
             priorityTextArea.setText("1");
@@ -393,8 +389,6 @@ public class Scheduler {
             hireDateLayout.setAlignment(javafx.geometry.Pos.CENTER);
             availabilityLayout.getChildren().addAll(availabilityText, availabilityComboBox, availabilityTextArea1, availabilityTextArea2);
             availabilityLayout.setAlignment(javafx.geometry.Pos.CENTER);
-            preferencesLayout.getChildren().addAll(preferencesText, preferencesTextArea);
-            preferencesLayout.setAlignment(javafx.geometry.Pos.CENTER);
             priorityLayout.getChildren().addAll(priorityText, priorityTextArea);
             priorityLayout.setAlignment(javafx.geometry.Pos.CENTER);
             maxHoursLayout.getChildren().addAll(maxDesiredHoursText, maxDesiredHoursTextArea);
@@ -436,7 +430,6 @@ public class Scheduler {
                 String firstName = firstNameTextArea.getText();
                 String lastName = lastNameTextArea.getText();
                 String hireDateString = hireDateTextArea.getText();
-                String preferencesString = preferencesTextArea.getText();
                 String priorityString = priorityTextArea.getText();
                 int maxDesiredHours = checkString(maxDesiredHoursTextArea.getText()) ? Integer.parseInt(maxDesiredHoursTextArea.getText()) : 40;
                 String maxString = maxTextArea.getText();
@@ -467,7 +460,6 @@ public class Scheduler {
 
                 //Convert the user inputted string into a hire date with the format MM/DD/YYYY
                 LocalDate hireDate = checkString(hireDateString) ? LocalDate.parse(hireDateString, DateTimeFormatter.ofPattern("yyyy-MM-dd")) : LocalDate.of(1,1,1);
-                LocalTime preferences = checkString(preferencesString) ? LocalTime.parse(preferencesString, DateTimeFormatter.ofPattern("HH:mm")) : LocalTime.of(0,0);
                 int priority = checkString(priorityString) ? Integer.parseInt(priorityString) : -1;
                 int max = checkString(maxString) ? Integer.parseInt(maxString) : -1;
 
