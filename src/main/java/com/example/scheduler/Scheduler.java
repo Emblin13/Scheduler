@@ -65,21 +65,6 @@ public class Scheduler {
         this.stage = stage;
         stage.setTitle("Scheduler");
 
-        for (int i = 0; i < 28; i++) {
-            Calendar cal = Calendar.getInstance();
-            cal.add(Calendar.DAY_OF_YEAR, i);
-            DayOfWeek dayOfWeek = DayOfWeek.of(cal.get(Calendar.DAY_OF_WEEK));
-            LocalTime startTime = LocalTime.of(0, 0);
-            LocalTime endTime = LocalTime.of(23, 59);
-            int minimumShiftLength = 0;
-            int maximumShiftLength = 24;
-            ArrayList<Role> neededRoles = new ArrayList<Role>();
-            Calendar shiftDate = cal;
-            //public Shift(DayOfWeek shiftDay, LocalTime startTime, LocalTime endTime, int minimumShiftLength, int maximumShiftLength, ArrayList<String> neededRoles, Calendar shiftDate)
-            Shift tempShift = new Shift(dayOfWeek, startTime, endTime, minimumShiftLength, maximumShiftLength, neededRoles, shiftDate);
-            shifts.add(tempShift);
-        }
-
         //Create buttons and make everyother button a different color
         addRoleButton = new Button("Add Role");
         addRoleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
@@ -174,7 +159,7 @@ public class Scheduler {
                     editShift(finalShift);
                 });
             } else {
-                button1.setText("Add Shift");
+                //button1.setText("Add Shift");
                 int finalI = i;
                 button1.setOnAction(e -> {
                     editSchedule(employee, finalI + dayOffset);
@@ -691,16 +676,20 @@ public class Scheduler {
                 tempRoles.add(getRole((String) choiceBox.getValue()));
                 ChoiceBox newChoiceBox = new ChoiceBox();
                 choiceBoxesAddRoles(newChoiceBox);
-                //get submit button and remove it from the layout and add it back to the layout so it is at the bottom.
-                try {
-                    Button submitButton = (Button) layout.getChildren().get(layout.getChildren().size() - 1);
-                    layout.getChildren().remove(submitButton);
-                    layout.getChildren().add(newChoiceBox);
-                    layout.getChildren().add(submitButton);
-                } catch (Exception e){
-                    layout.getChildren().add(newChoiceBox);
+                //Check if the layout contains a button, if it does, add the new choice box before the button.
+                ArrayList<Button> buttonHolder = new ArrayList<>();
+                //while checks if the last element in the layout is a button, if it is, add it to the buttonHolder arraylist and remove it from the layout.
+                while (layout.getChildren().get(layout.getChildren().size() - 1) instanceof Button){
+                    Button button = (Button) layout.getChildren().get(layout.getChildren().size() - 1);
+                    buttonHolder.add(button);
+                    layout.getChildren().remove(button);
                 }
                 choiceBoxes.add(newChoiceBox);
+                //add the new choice box to the layout.
+                layout.getChildren().add(newChoiceBox);
+                for (Button button : buttonHolder){
+                    layout.getChildren().add(button);
+                }
                 newChoiceBox.setOnAction(e -> choiceBoxEvent(newChoiceBox, choiceBoxes, tempRoles, layout));
             } else {
                 tempRoles.set(choiceBoxes.indexOf(choiceBox), getRole((String) choiceBox.getValue()));

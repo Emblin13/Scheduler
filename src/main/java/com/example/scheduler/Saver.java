@@ -19,7 +19,8 @@ public class Saver {
         }
         writer = new FileWriter(fileToSave);
         for (int i = 0; i < toSave.size(); i++) {
-            writer.write(toSave.get(i).toString() + "\n");
+            String line = toSave.get(i).toString();
+            writer.write(line + "\n");
         }
         writer.close();
     }

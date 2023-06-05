@@ -104,15 +104,16 @@ public class Reader {
             }
 
             //read in the date of the shift
-            line = line.substring(line.indexOf(" ") + 1);
-            int dayOfTheYear = Integer.parseInt(line);
+            int dayOfTheYear = Integer.parseInt(line.substring(0, line.indexOf(" ")));
             Calendar shiftDate = Calendar.getInstance();
             shiftDate.set(Calendar.DAY_OF_YEAR, dayOfTheYear);
             line = line.substring(line.indexOf(" ") + 1);
             int id = Integer.parseInt(line);
 
             //Shift(DayOfWeek shiftDay,LocalTime startTime,LocalTime endTime, int minimumShiftLength, int maximumShiftLength, ArrayList<Role> neededRoles, Calendar shiftDate)
-            shifts.add(new Shift(shiftDay, startTime, endTime, minimumShiftLength, maximumShiftLength, neededRoles, shiftDate));
+            Shift shift = new Shift(shiftDay, startTime, endTime, minimumShiftLength, maximumShiftLength, neededRoles, shiftDate);
+            shift.setEmployeeID(id);
+            shifts.add(shift);
         }
         return shifts;
     }
