@@ -6,7 +6,10 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.*;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
 import java.time.LocalDate;
@@ -24,7 +27,7 @@ public class Scheduler {
 
     int dayOffset;
     int tempId = -1;
-    BorderPane layout;
+    BorderPane mainBorderlayout;
     HBox topMenu;
     GridPane grid;
     Scene scene;
@@ -47,9 +50,9 @@ public class Scheduler {
     }
 
     public void start(Stage stage){
-        layout = new BorderPane();
+        mainBorderlayout = new BorderPane();
         //Set background color to dark grey
-        scene = new Scene(layout, 1000, 700);
+        scene = new Scene(mainBorderlayout, 1000, 700);
         System.out.println("Scheduler started");
         this.stage = stage;
         stage.setTitle("Scheduler");
@@ -101,8 +104,8 @@ public class Scheduler {
 
         showWeek(0);
 
-        layout.setTop(topMenu);
-        layout.setCenter(grid);
+        mainBorderlayout.setTop(topMenu);
+        mainBorderlayout.setCenter(grid);
         stage.setScene(scene);
     }
 
@@ -121,19 +124,54 @@ public class Scheduler {
             Button button1 = new Button();
             button1.setStyle("-fx-background-color: transparent;");
             button1.setMaxWidth(Double.MAX_VALUE);
-            button1.setPrefHeight(20);
+            button1.setPrefHeight(40);
             grid.add(button1, i + 1, index + 1);
+
+            int finalI = i;
+            button1.setOnAction(e -> {
+                editSchedule(employee, finalI);
+            });
         }
     }
 
+    private void editSchedule(Employee employee, int dayOffset){
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DATE, dayOffset);
+        System.out.println("Edit schedule of " + employee.getFirstName() + " " + employee.getLastName()+ " on " + calendar.getTime());
+
+        if (!subMenuOpen){
+            Stage subStage = new Stage();
+            subStage.setTitle("Edit Schedule");
+            //Add text to the top of the window telling the user the name of the employee and the date they are editing. Don't include the time.
+            Text text = new Text("Edit schedule of " + employee.getFirstName() + " " + employee.getLastName()+ " on " + (calendar.get(Calendar.MONTH) + 1) + "/" + calendar.get(Calendar.DATE));
+            text.setFont(Font.font("Verdana", FontWeight.BOLD, 20));
+            text.setTextAlignment(TextAlignment.CENTER);
+
+            VBox layout = new VBox(10);
+            layout.getChildren().add(text);
+
+            //Set the scene and show the stage.
+            Scene scene = new Scene(layout, 500, 400);
+            subStage.setScene(scene);
+
+            //If the sub menu is closed, set the subMenuOpen to false.
+            subStage.addEventHandler(javafx.stage.WindowEvent.WINDOW_CLOSE_REQUEST, event -> {
+                subMenuOpen = false;
+            });
+
+            subStage.show();
+        }
+
+    }
+
     private void showWeek(int mod){
-        layout.getChildren().remove(grid);
+        mainBorderlayout.getChildren().remove(grid);
         grid = new GridPane();
         grid.setHgap(0);
         grid.setVgap(0);
         grid.setAlignment(Pos.TOP_CENTER);
         grid.setGridLinesVisible(true);
-        layout.setCenter(grid);
+        mainBorderlayout.setCenter(grid);
 
         Text textEmployee = new Text(" Employees ");
         textEmployee.wrappingWidthProperty().bind(scene.widthProperty().divide(8));
@@ -199,6 +237,12 @@ public class Scheduler {
             //Layout for the sub menu inputs.
             HBox firstNameLayout = new HBox(10);
             HBox lastNameLayout = new HBox(10);
+            HBox birthDateLayout = new HBox(10);
+            HBox availabilityLayout = new HBox(10);
+            HBox preferencesLayout = new HBox(10);
+            HBox priorityLayout = new HBox(10);
+            HBox maxHoursLayout = new HBox(10);
+            HBox maximumHoursLayout = new HBox(10);
 
             //Text and text area for the first and last name.
             Text firstNameText = new Text("First Name");
@@ -212,38 +256,44 @@ public class Scheduler {
 
             Text birthDateText = new Text("Birth Date");
             TextArea birthDateTextArea = new TextArea();
-            firstNameTextArea.setPrefHeight(20);
-            firstNameTextArea.setPrefWidth(110);
+            birthDateTextArea.setPrefHeight(20);
+            birthDateTextArea.setPrefWidth(110);
 
             Text availabilityText = new Text("Availability");
             TextArea availabilityTextArea = new TextArea();
-            firstNameTextArea.setPrefHeight(20);
-            firstNameTextArea.setPrefWidth(110);
+            availabilityTextArea.setPrefHeight(20);
+            availabilityTextArea.setPrefWidth(110);
 
             Text preferencesText = new Text("Preferences");
             TextArea preferencesTextArea = new TextArea();
-            firstNameTextArea.setPrefHeight(20);
-            firstNameTextArea.setPrefWidth(110);
+            preferencesTextArea.setPrefHeight(20);
+            preferencesTextArea.setPrefWidth(110);
 
             Text priorityText = new Text("Priority");
             TextArea priorityTextArea = new TextArea();
-            firstNameTextArea.setPrefHeight(20);
-            firstNameTextArea.setPrefWidth(110);
+            priorityTextArea.setPrefHeight(20);
+            priorityTextArea.setPrefWidth(110);
 
             Text maxDesiredHoursText = new Text("Maximum Desired Hours");
             TextArea maxDesiredHoursTextArea = new TextArea();
-            firstNameTextArea.setPrefHeight(20);
-            firstNameTextArea.setPrefWidth(110);
+            maxDesiredHoursTextArea.setPrefHeight(20);
+            maxDesiredHoursTextArea.setPrefWidth(110);
 
             Text maxText = new Text("Maximum Hours");
             TextArea maxTextArea = new TextArea();
-            firstNameTextArea.setPrefHeight(20);
-            firstNameTextArea.setPrefWidth(110);
+            maxTextArea.setPrefHeight(20);
+            maxTextArea.setPrefWidth(110);
 
             if (employee != null){
                 tempId = employee.getId();
                 firstNameTextArea.setText(employee.getFirstName());
                 lastNameTextArea.setText(employee.getLastName());
+                birthDateTextArea.setText(employee.getBirthDate().toString());
+                availabilityTextArea.setText(String.valueOf(employee.getAvailability()));
+                preferencesTextArea.setText(String.valueOf(employee.getPreferences()));
+                priorityTextArea.setText(String.valueOf(employee.getPriority()));
+                maxDesiredHoursTextArea.setText(String.valueOf(employee.getMaximumDesiredHours()));
+                maxTextArea.setText(String.valueOf(employee.getMaximumHours()));
             }
 
             //Add the text and text area together and centers them.
@@ -251,10 +301,22 @@ public class Scheduler {
             firstNameLayout.setAlignment(javafx.geometry.Pos.CENTER);
             lastNameLayout.getChildren().addAll(lastNameText, lastNameTextArea);
             lastNameLayout.setAlignment(javafx.geometry.Pos.CENTER);
+            birthDateLayout.getChildren().addAll(birthDateText, birthDateTextArea);
+            birthDateLayout.setAlignment(javafx.geometry.Pos.CENTER);
+            availabilityLayout.getChildren().addAll(availabilityText, availabilityTextArea);
+            availabilityLayout.setAlignment(javafx.geometry.Pos.CENTER);
+            preferencesLayout.getChildren().addAll(preferencesText, preferencesTextArea);
+            preferencesLayout.setAlignment(javafx.geometry.Pos.CENTER);
+            priorityLayout.getChildren().addAll(priorityText, priorityTextArea);
+            priorityLayout.setAlignment(javafx.geometry.Pos.CENTER);
+            maxHoursLayout.getChildren().addAll(maxDesiredHoursText, maxDesiredHoursTextArea);
+            maxHoursLayout.setAlignment(javafx.geometry.Pos.CENTER);
+            maximumHoursLayout.getChildren().addAll(maxText, maxTextArea);
+            maximumHoursLayout.setAlignment(javafx.geometry.Pos.CENTER);
 
             //Add the first and last name layouts to the main layout.
             VBox layout = new VBox(10);
-            layout.getChildren().addAll(firstNameLayout, lastNameLayout);
+            layout.getChildren().addAll(firstNameLayout, lastNameLayout, birthDateLayout, availabilityLayout, preferencesLayout, priorityLayout, maxHoursLayout, maximumHoursLayout);
             layout.setAlignment(javafx.geometry.Pos.CENTER);
 
             //A drop down menu to select the role of the employee.
@@ -293,10 +355,10 @@ public class Scheduler {
                 String maxString = maxTextArea.getText();
 
                 //Convert the user inputted string into a birthday with the format MM/DD/YYYY
-                LocalDate birthDate = checkString(birthDateString) ? LocalDate.parse(birthDateString, DateTimeFormatter.ofPattern("MM/dd/yyyy")) : null;
+                LocalDate birthDate = checkString(birthDateString) ? LocalDate.parse(birthDateString, DateTimeFormatter.ofPattern("MM/dd/yyyy")) : LocalDate.of(1,1,1);
                 //Convert a user inputted string into a LocalTime with the format HH:MM
-                LocalTime availability = checkString(availabilityString) ? LocalTime.parse(availabilityString, DateTimeFormatter.ofPattern("HH:mm")) : null;
-                LocalTime preferences = checkString(preferencesString) ? LocalTime.parse(preferencesString, DateTimeFormatter.ofPattern("HH:mm")) : null;
+                LocalTime availability = checkString(availabilityString) ? LocalTime.parse(availabilityString, DateTimeFormatter.ofPattern("HH:mm")) : LocalTime.of(0,0);
+                LocalTime preferences = checkString(preferencesString) ? LocalTime.parse(preferencesString, DateTimeFormatter.ofPattern("HH:mm")) : LocalTime.of(0,0);
                 int priority = checkString(priorityString) ? Integer.parseInt(priorityString) : -1;
                 int maxDesiredHours = checkString(maxDesiredHoursString) ? Integer.parseInt(maxDesiredHoursString) : -1;
                 int max = checkString(maxString) ? Integer.parseInt(maxString) : -1;
@@ -328,7 +390,7 @@ public class Scheduler {
             }
 
             //Set the scene and show the stage.
-            Scene scene = new Scene(layout, 500, 400);
+            Scene scene = new Scene(layout, 500, 630);
             subStage.setScene(scene);
 
             //If the sub menu is closed, set the subMenuOpen to false.
@@ -358,7 +420,7 @@ public class Scheduler {
         }
         if (employee == null){
             System.out.println("Making new employee");
-            employee = new Employee(first, last, assignId(), null, availability, preferences, priority,
+            employee = new Employee(first, last, assignId(), birth, availability, preferences, priority,
                     maxDesiredHours, maxHours);
             employee.setRoles(tempList);
             employees.add(employee);
