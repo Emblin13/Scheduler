@@ -18,8 +18,9 @@ public class Main extends Application {
         System.out.println("Hello world");
 
         this.stage = primaryStage;
-        Menu menu = new Menu();
-        menu.start(stage);
+        Scheduler scheduler = new Scheduler();
+        scheduler.start(stage);
+        stage.show();
         
     }
 
