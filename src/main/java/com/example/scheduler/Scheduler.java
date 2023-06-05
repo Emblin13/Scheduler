@@ -915,6 +915,8 @@ public class Scheduler {
                     employeesForDay.add(employee);
                 }
             }
+            //randomize the order of the shifts and employees
+            Collections.shuffle(employeesForDay);
             for (Shift shift : shiftsForDay) {
                 for (Employee employee : employeesForDay) {
                     Availability availability = employee.getAvailability().get(dayOfWeek-1);
