@@ -443,7 +443,7 @@ public class Scheduler {
                 String maxString = maxTextArea.getText();
 
                 //check if the user selected a day of the week and if they did, get the start and end time of that day.
-                if(availabilityComboBox.getValue() != ""){
+                if(availabilityComboBox.getValue() != "" && availabilityComboBox.getValue() != null){
                     //get the day of the week
                     DayOfWeek dayOfWeek = DayOfWeek.valueOf(availabilityComboBox.getValue().toUpperCase());
                     //get the start and end times
@@ -599,10 +599,14 @@ public class Scheduler {
                 if (name.equals("")) {
                     System.out.println("First or last name is blank");
                     return;
-                } else {
+                } else if (role == null) {
                     name = name.substring(0, 1).toUpperCase() + name.substring(1);
                     roles.add(new Role(name, assignId()));
                     System.out.println("Role created: " + name);
+                    subStage.close();
+                    subMenuOpen = false;
+                } else {
+                    role.setName(name);
                     subStage.close();
                     subMenuOpen = false;
                 }
