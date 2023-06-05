@@ -2,16 +2,20 @@ package com.example.scheduler;
 
 import java.util.ArrayList;
 
+//Role class deals with employee roles
 public class Role {
+    //Role attributes
     private String name;
     private int id;
     private ArrayList<Employee> employees = new ArrayList<Employee>();
 
+    //Role constructor
     public Role(String name, int id){
         this.name = name;
         this.id = id;
     }
 
+    //Getters and setters
     public String getName(){
         return this.name;
     }

@@ -5,8 +5,10 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+//Menu class deals with all things related to the GUI
 public class Menu {
 
+    //Menu Attributes
     Stage stage;
     Button managerButton;
     Button employeeButton;
