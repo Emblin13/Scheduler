@@ -7,10 +7,7 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.*;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
 import java.io.File;
@@ -57,6 +54,8 @@ public class Scheduler {
     private Button editShiftButton;
     private Button previousWeekButton;
     private Button nextWeekButton;
+    private Button printScheduleButton;
+    private Button eraseScheduleButton;
 
     public Scheduler(){
         System.out.println("Scheduler created");
@@ -96,6 +95,13 @@ public class Scheduler {
         nextWeekButton = new Button("Next Week");
         nextWeekButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
 
+        printScheduleButton = new Button("Print Schedule");
+        printScheduleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
+        printScheduleButton.setOnAction(e -> printSchedule());
+        eraseScheduleButton = new Button("Erase Schedule");
+        eraseScheduleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
+        eraseScheduleButton.setOnAction(e -> eraseSchedule());
+
         previousWeekButton.setOnAction(e -> {
             dayOffset -= 7;
             if (dayOffset < 0){
@@ -121,7 +127,7 @@ public class Scheduler {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         topMenu = new HBox(0);
-        topMenu.getChildren().addAll(addRoleButton, addEmployeeButton, saveButton, loadButton, editRoleButton, generateScheduleButton, previousWeekButton, nextWeekButton, spacer);
+        topMenu.getChildren().addAll(addRoleButton, addEmployeeButton, saveButton, loadButton, editRoleButton, generateScheduleButton, printScheduleButton, eraseScheduleButton, previousWeekButton, nextWeekButton, spacer);
 
         showWeek(0);
 
@@ -1012,6 +1018,47 @@ public class Scheduler {
         }
         start(stage);
     }
+
+    private void printSchedule() {
+        ScreenShotter ss = new ScreenShotter();
+        //ss.getScreen();
+        ss.getScreenOnlyWindow(getStageWidth(), getStageHeight(), getStageXOffset(), getStageYOffset());
+        ss.takeShot();
+        ss.saveImage();
+        System.out.println("Schedule printed to " + ss.getHomeDirectory() + "\\Pictures\\Schedules");
+    }
+
+    private void eraseSchedule() {
+        if (!subMenuOpen) {
+            subMenuOpen = true;
+            Stage subStage = new Stage();
+            subStage.setTitle("Erase schedule");
+            VBox layout = new VBox(10);
+            layout.setAlignment(javafx.geometry.Pos.CENTER);
+
+            Text erasePrompt = new Text("Are you sure you want to erase the schedule?");
+            Button noButton = new Button("No");
+            noButton.setOnAction(e -> subStage.close());
+            Button yesButton = new Button("Yes");
+            yesButton.setOnAction(e -> {shifts.clear(); subStage.close();});
+
+            layout.getChildren().addAll(erasePrompt, noButton, yesButton);
+
+            //Set the scene and show the stage.
+            Scene scene = new Scene(layout, 500, 400);
+            subStage.setScene(scene);
+        }
+    }
+
+    public int getStageWidth() { return (int) stage.getWidth(); }
+
+    public int getStageHeight() { return (int) stage.getHeight(); }
+
+    public int getStageXOffset() { return (int) stage.getX(); }
+
+    public int getStageYOffset() { return (int) stage.getY(); }
+
+
 
 }
 
