@@ -18,6 +18,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 public class Scheduler {
@@ -333,34 +334,49 @@ public class Scheduler {
 
             //add event handler for the drop down menu to add the availability to the day of the week unless no day is selected.
             List<Availability> finalAvailability = availability;
-            AtomicInteger currentDay = new AtomicInteger();
+            AtomicReference<String> previousDay = new AtomicReference<>("");
             availabilityComboBox.setOnAction(e -> {
-                //check if day is selected
-                try {
-                    if (availabilityComboBox.getValue() != null) {
-                        //get the day of the week
-                        DayOfWeek dayOfWeek = DayOfWeek.valueOf(availabilityComboBox.getValue().toUpperCase());
-                        //get the start and end times
-                        LocalTime start = LocalTime.parse(availabilityTextArea1.getText());
-                        LocalTime end = LocalTime.parse(availabilityTextArea2.getText());
-                        //create a new availability object
-                        Availability tempAvailability = new Availability(dayOfWeek, start, end);
-                        //add the availability to the list
-                        System.out.println("Day: " + currentDay + " Start: " + start + " End: " + end);
-                        finalAvailability.set(currentDay.get(), tempAvailability);
-                        //fill the text areas with the availability for the day selected
-                        currentDay.set(dayOfWeek.getValue() - 1);
-                        availabilityTextArea1.setText(finalAvailability.get(dayOfWeek.getValue() - 1).getStartTime().toString());
-                        availabilityTextArea2.setText(finalAvailability.get(dayOfWeek.getValue() - 1).getEndTime().toString());
+                if(!availabilityTextArea1.getText().isBlank() || !availabilityTextArea2.getText().isBlank()){
+                    DayOfWeek dayOfWeek = DayOfWeek.valueOf(previousDay.get().toUpperCase(Locale.ROOT));
+                    LocalTime start = LocalTime.parse(availabilityTextArea1.getText());
+                    LocalTime end = LocalTime.parse(availabilityTextArea2.getText());
+                    Availability tempAvailability = new Availability(dayOfWeek, start, end);
+                    for (int i = 0; i < finalAvailability.size(); i++){
+                        String dayFinal = finalAvailability.get(i).getDay().toString().toLowerCase(Locale.ROOT);
+                        String inputDay = previousDay.toString().toLowerCase(Locale.ROOT);
+                        if (dayFinal.equals(inputDay)){
+                            finalAvailability.set(i, tempAvailability);
+                            break;
+                        }
                     }
-                } catch (Exception ex){
-                    System.out.println("No day selected");
-                    //fill the text areas with the availability for the day selected
-                    DayOfWeek dayOfWeek = DayOfWeek.valueOf(availabilityComboBox.getValue().toUpperCase());
-                    availabilityTextArea1.setText(finalAvailability.get(dayOfWeek.getValue() - 1).getStartTime().toString());
-                    availabilityTextArea2.setText(finalAvailability.get(dayOfWeek.getValue() - 1).getEndTime().toString());
-                    currentDay.set(dayOfWeek.getValue() - 1);
+                    for (int i = 0; i < finalAvailability.size(); i++){
+                        String dayFinal = finalAvailability.get(i).getDay().toString().toLowerCase(Locale.ROOT);
+                        String inputDay = availabilityComboBox.getValue().toLowerCase(Locale.ROOT);
+                        if (dayFinal.equals(inputDay)){
+                            System.out.println("Found day: " + finalAvailability.get(i).getDay() + " : " + inputDay);
+                            availabilityTextArea1.setText(finalAvailability.get(i).getStartTime().toString());
+                            availabilityTextArea2.setText(finalAvailability.get(i).getEndTime().toString());
+                            previousDay.set(inputDay);
+                            break;
+                        }
+                    }
+                } else if (availabilityComboBox.getValue() != null){
+                    System.out.println("Availability: " + availabilityComboBox.getValue());
+                    int index = -1;
+                    for (int i = 0; i < finalAvailability.size(); i++){
+                        String dayFinal = finalAvailability.get(i).getDay().toString().toLowerCase(Locale.ROOT);
+                        String inputDay = availabilityComboBox.getValue().toLowerCase(Locale.ROOT);
+                        if (dayFinal.equals(inputDay)){
+                            System.out.println("Found day: " + finalAvailability.get(i).getDay() + " : " + inputDay);
+                            previousDay.set(inputDay);
+                            index = i;
+                            break;
+                        }
+                    }
+                    availabilityTextArea1.setText(finalAvailability.get(index).getStartTime().toString());
+                    availabilityTextArea2.setText(finalAvailability.get(index).getEndTime().toString());
                 }
+
             });
 
             Text priorityText = new Text("Priority");
@@ -453,9 +469,17 @@ public class Scheduler {
                     LocalTime end = LocalTime.parse(availabilityTextArea2.getText());
                     //create a new availability object
                     Availability tempAvailability = new Availability(dayOfWeek, start, end);
-                    //add the availability to the list
-                    System.out.println("Day: " + currentDay + " Start: " + start + " End: " + end);
-                    finalAvailability.set(currentDay.get(), tempAvailability);
+
+                    int index = -1;
+                    for (int i = 0; i < finalAvailability.size(); i++){
+                        String dayFinal = finalAvailability.get(i).getDay().toString().toLowerCase(Locale.ROOT);
+                        String inputDay = availabilityComboBox.getValue().toLowerCase(Locale.ROOT);
+                        if (dayFinal.equals(inputDay)){
+                            index = i;
+                            break;
+                        }
+                    }
+                    finalAvailability.set(index, tempAvailability);
                 }
 
                 //Convert the user inputted string into a hire date with the format MM/DD/YYYY
@@ -932,13 +956,17 @@ public class Scheduler {
             }
         }
 
-        calendar = Calendar.getInstance();
+        Calendar shiftCalendar = Calendar.getInstance();
         for (int i = 0; i < 28; i++){
-            int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
             ArrayList<Shift> shiftsForDay = new ArrayList<>();
             ArrayList<Employee> employeesForDay = new ArrayList<>();
             for (Shift shift : shifts) {
-                if (shift.getShiftDate().get(Calendar.DAY_OF_YEAR) == calendar.get(Calendar.DAY_OF_YEAR)) {
+                int shiftDay = shift.getShiftDate().get(Calendar.DAY_OF_YEAR);
+                int currentDay = shiftCalendar.get(Calendar.DAY_OF_YEAR);
+                if (shiftDay == currentDay) {
+                    Calendar tempCalendar = Calendar.getInstance();
+                    tempCalendar.set(Calendar.DAY_OF_YEAR, shift.getShiftDate().get(Calendar.DAY_OF_YEAR) - 1);
+                    shift.setShiftDay(DayOfWeek.of(tempCalendar.get(Calendar.DAY_OF_WEEK)));
                     shiftsForDay.add(shift);
                 }
             }
@@ -961,9 +989,7 @@ public class Scheduler {
             });
 
             for (Employee employee : employees) {
-                if (employee.getAvailability().get(dayOfWeek-1).getTotalHours() > 0) {
-                    employeesForDay.add(employee);
-                }
+                employeesForDay.add(employee);
             }
             //randomize the order of the shifts based on the seed
             Collections.shuffle(employeesForDay, new Random(seed));
@@ -972,12 +998,26 @@ public class Scheduler {
                 //check if the shift is more than a week away from the previous sunday
                 
                 for (Employee employee : employeesForDay) {
-                    Availability availability = employee.getAvailability().get(dayOfWeek-1);
+                    calendar.set(Calendar.DAY_OF_YEAR, shift.getShiftDate().get(Calendar.DAY_OF_YEAR) - 1);
+                    Availability availability = null;
+                    for (Availability tempAvailability : employee.getAvailability()) {
+                        String employeeDay = tempAvailability.getDay().toString();
+                        String shiftDay = shift.getShiftDay().toString();
+                        if (employeeDay.equals(shiftDay)){
+                            availability = tempAvailability;
+                            break;
+                        } else {
+                            System.out.println("Day: " + employeeDay + " " + shiftDay);
+                        }
+                    }
                     int shiftLength = shift.getEndTime().getHour() - shift.getStartTime().getHour();
-                    if (rolesMatch(employee.getRoles(), shift.getNeededRoles()) &&
-                            (availability.getStartTime().isBefore(shift.getStartTime()) || availability.getStartTime().toString().equals(shift.getStartTime().toString())) &&
-                            ((availability.getEndTime().isAfter(shift.getEndTime())) || availability.getEndTime().toString().equals(shift.getEndTime().toString()))
-                            && employee.getRemainingHours() >= shiftLength) {
+                    int shiftStart = shift.getStartTime().getHour();
+                    int shiftEnd = shift.getEndTime().getHour();
+                    int employeeStart = availability.getStartTime().getHour();
+                    int employeeEnd = availability.getEndTime().getHour();
+                    //check if the employee is available for the shift
+                    if (rolesMatch(employee.getRoles(), shift.getNeededRoles()) && employee.getRemainingHours() >= shiftLength &&
+                            shiftStart >= employeeStart && shiftEnd <= employeeEnd) {
                         shift.setEmployeeID(employee.getId());
                         employeesForDay.remove(employee);
                         employee.setRemainingHours(employee.getRemainingHours() - shiftLength);
@@ -997,7 +1037,7 @@ public class Scheduler {
                     }
                 }
             }
-            calendar.add(Calendar.DAY_OF_YEAR, 1);
+            shiftCalendar.add(Calendar.DAY_OF_YEAR, 1);
         }
         showWeek(dayOffset);
     }
