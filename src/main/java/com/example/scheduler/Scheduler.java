@@ -909,7 +909,23 @@ public class Scheduler {
         for (Shift shift : shifts) {
             shift.setEmployeeID(-1);
         }
+        //reset all employees remaining hours
+        for (Employee employee : employees) {
+            employee.setRemainingHours(employee.getMaximumHours());
+        }
+
+        //Find the most recent Sunday
+        int previousSunday = 0;
         Calendar calendar = Calendar.getInstance();
+        for (int i = 0; i < 7; i++) {
+            calendar.add(Calendar.DAY_OF_YEAR, -1);
+            if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+                previousSunday = calendar.get(Calendar.DAY_OF_YEAR);
+                break;
+            }
+        }
+
+        calendar = Calendar.getInstance();
         for (int i = 0; i < 28; i++){
             int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
             ArrayList<Shift> shiftsForDay = new ArrayList<>();
@@ -919,6 +935,14 @@ public class Scheduler {
                     shiftsForDay.add(shift);
                 }
             }
+            //sort the shifts by date
+            Collections.sort(shiftsForDay, new Comparator<Shift>() {
+                @Override
+                public int compare(Shift o1, Shift o2) {
+                    return o1.getShiftDate().compareTo(o2.getShiftDate());
+                }
+            });
+
             for (Employee employee : employees) {
                 if (employee.getAvailability().get(dayOfWeek-1).getTotalHours() > 0) {
                     employeesForDay.add(employee);
@@ -928,12 +952,26 @@ public class Scheduler {
             Collections.shuffle(employeesForDay, new Random(seed));
 
             for (Shift shift : shiftsForDay) {
+                //check if the shift is more than a week away from the previous sunday
+                if (shift.getShiftDate().get(Calendar.DAY_OF_YEAR) - previousSunday > 7) {
+                    //if it is, reset the remaining hours for all employees
+                    for (Employee employee : employees) {
+                        employee.setRemainingHours(employee.getMaximumHours());
+                    }
+                    //set the previous sunday to the current shift's day
+                    previousSunday = shift.getShiftDate().get(Calendar.DAY_OF_YEAR);
+                }
+                
                 for (Employee employee : employeesForDay) {
                     Availability availability = employee.getAvailability().get(dayOfWeek-1);
-                    //Check if the employee has the required roles and is available for the entire shift by checking if the start time is before or equal to the shift start time and the end time is after or equal to the shift end time.
-                    if (rolesMatch(employee.getRoles(), shift.getNeededRoles()) && (availability.getStartTime().isBefore(shift.getStartTime()) || availability.getStartTime().toString().equals(shift.getStartTime().toString())) && ((availability.getEndTime().isAfter(shift.getEndTime())) || availability.getEndTime().toString().equals(shift.getEndTime().toString()))){
+
+                    if (rolesMatch(employee.getRoles(), shift.getNeededRoles()) &&
+                            (availability.getStartTime().isBefore(shift.getStartTime()) || availability.getStartTime().toString().equals(shift.getStartTime().toString())) &&
+                            ((availability.getEndTime().isAfter(shift.getEndTime())) || availability.getEndTime().toString().equals(shift.getEndTime().toString()))
+                            && (employee.getRemainingHours() >= (shift.getEndTime().getHour() - shift.getStartTime().getHour()))) {
                         shift.setEmployeeID(employee.getId());
                         employeesForDay.remove(employee);
+                        employee.setRemainingHours(employee.getRemainingHours() - shift.getEndTime().getHour() - shift.getStartTime().getHour());
                         System.out.println("Assigned shift: " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime().toString() + " - " + shift.getEndTime().toString() + " to employee: "+ employee.getFirstName() + " " + employee.getLastName() + " with ID: " + employee.getId());
                         break;
                     } else {
