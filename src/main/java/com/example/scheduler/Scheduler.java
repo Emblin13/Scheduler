@@ -145,7 +145,7 @@ public class Scheduler {
             Button button1 = new Button();
             button1.setStyle("-fx-background-color: transparent;");
             button1.setMaxWidth(Double.MAX_VALUE);
-            button1.setPrefHeight(40);
+            button1.setPrefHeight(45);
             grid.add(button1, i + 1, index + 1);
 
             Shift shift = null;
@@ -159,6 +159,8 @@ public class Scheduler {
 
             if (shift != null){
                 button1.setText(shift.getStartTime().toString() + " - " + shift.getEndTime().toString());
+                //add black border to button
+                button1.setStyle("-fx-background-color: "+shift.getColor()+"; -fx-border-color: black; -fx-border-width: 1px; -fx-border-radius: 0;");
                 Shift finalShift = shift;
                 button1.setOnAction(e -> {
                     editShift(finalShift);
@@ -853,22 +855,9 @@ public class Scheduler {
                 shiftButton.setPrefWidth(200);
                 shiftButton.setPrefHeight(50);
                 shiftButton.setAlignment(javafx.geometry.Pos.CENTER);
-                //shiftButton.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #000000; -fx-border-width: 1px;");
-                //covert shift hashcode to a color. Limit color to light colors.
-                int hash = shift.hashCode();
-                String color = "#";
-                for (int i = 0; i < 3; i++) {
-                    int temp = hash % 16;
-                    hash = hash / 16;
-                    if (temp < 10) {
-                        color += temp;
-                    } else {
-                        color += (char) (temp + 55);
-                    }
-                }
 
                 //Bold the text
-                shiftButton.setStyle("-fx-background-color: "+color+"; -fx-border-color: #000000; -fx-border-width: 1px; -fx-font-weight: bold;");
+                shiftButton.setStyle("-fx-background-color: "+shift.getColor()+"; -fx-border-color: #000000; -fx-border-width: 1px; -fx-font-weight: bold;");
                 layout.getChildren().add(shiftButton);
             }
 
@@ -962,13 +951,15 @@ public class Scheduler {
     }
 
     private void save(){
-        Saver saver = new Saver();
-        try {
-            saver.save(employees, new File("employees.txt"));
-            saver.save(shifts, new File("shifts.txt"));
-            saver.save(roles, new File("roles.txt"));
-        } catch (IOException e) {
-            e.printStackTrace();
+        if(employees.size() > 0 && shifts.size() > 0 && roles.size() > 0){
+            Saver saver = new Saver();
+            try {
+                saver.save(employees, new File("employees.txt"));
+                saver.save(shifts, new File("shifts.txt"));
+                saver.save(roles, new File("roles.txt"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

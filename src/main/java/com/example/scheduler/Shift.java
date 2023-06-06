@@ -111,4 +111,43 @@ public class Shift
     public Calendar getShiftDate() {
         return shiftDate;
     }
+
+    public String getColor() {
+        String temp = toString().substring(0, toString().lastIndexOf(" "));
+        String color = String.valueOf(Math.abs(temp.hashCode()));
+        color = String.format("#%6s", color).replace(' ', '0');
+
+        String red = color.substring(1, 3);
+        if (Integer.parseInt(red, 16) < 127){
+            int redInt = Integer.parseInt(red, 16);
+            redInt = 255 - redInt;
+            red = Integer.toHexString(redInt);
+        } else {
+            int redInt = Integer.parseInt(red, 16);
+            red = Integer.toHexString(redInt);
+        }
+
+        String green = color.substring(3, 5);
+        if (Integer.parseInt(green, 16) < 127){
+            int greenInt = Integer.parseInt(green, 16);
+            greenInt = 255 - greenInt;
+            green = Integer.toHexString(greenInt);
+        } else {
+            int greenInt = Integer.parseInt(green, 16);
+            green = Integer.toHexString(greenInt);
+        }
+
+        String blue = color.substring(5, 7);
+        if (Integer.parseInt(blue, 16) < 127){
+            int blueInt = Integer.parseInt(blue, 16);
+            blueInt = 255 - blueInt;
+            blue = Integer.toHexString(blueInt);
+        } else {
+            int blueInt = Integer.parseInt(blue, 16);
+            blue = Integer.toHexString(blueInt);
+        }
+
+        color = "#" + red + green + blue;
+        return color;
+    }
 }
