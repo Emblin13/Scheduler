@@ -42,6 +42,10 @@ public class Scheduler {
     Saver saver = new Saver();
     Reader reader = new Reader();
 
+    //Random seed for testing based on the current time
+    Random rand = new Random(System.currentTimeMillis());
+    int seed = rand.nextInt(1000000);
+
     //buttons
     private Button addRoleButton;
     private Button addEmployeeButton;
@@ -555,7 +559,7 @@ public class Scheduler {
         if (!subMenuOpen){
             tempId = -1;
             Stage subStage = new Stage();
-            subStage.setTitle("Add Employee");
+            subStage.setTitle("Role Menu");
 
             //Layout for the sub menu inputs.
             HBox roleNameLayout = new HBox(10);
@@ -849,7 +853,22 @@ public class Scheduler {
                 shiftButton.setPrefWidth(200);
                 shiftButton.setPrefHeight(50);
                 shiftButton.setAlignment(javafx.geometry.Pos.CENTER);
-                shiftButton.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #000000; -fx-border-width: 1px;");
+                //shiftButton.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #000000; -fx-border-width: 1px;");
+                //covert shift hashcode to a color. Limit color to light colors.
+                int hash = shift.hashCode();
+                String color = "#";
+                for (int i = 0; i < 3; i++) {
+                    int temp = hash % 16;
+                    hash = hash / 16;
+                    if (temp < 10) {
+                        color += temp;
+                    } else {
+                        color += (char) (temp + 55);
+                    }
+                }
+
+                //Bold the text
+                shiftButton.setStyle("-fx-background-color: "+color+"; -fx-border-color: #000000; -fx-border-width: 1px; -fx-font-weight: bold;");
                 layout.getChildren().add(shiftButton);
             }
 
@@ -868,6 +887,7 @@ public class Scheduler {
                 subMenuOpen = false;
                 editShift(tempShift);
             });
+
             addButton.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #000000; -fx-border-width: 1px;");
             layout.getChildren().add(addButton);
 
@@ -915,8 +935,9 @@ public class Scheduler {
                     employeesForDay.add(employee);
                 }
             }
-            //randomize the order of the shifts and employees
-            Collections.shuffle(employeesForDay);
+            //randomize the order of the shifts based on the seed
+            Collections.shuffle(employeesForDay, new Random(seed));
+
             for (Shift shift : shiftsForDay) {
                 for (Employee employee : employeesForDay) {
                     Availability availability = employee.getAvailability().get(dayOfWeek-1);
