@@ -942,6 +942,16 @@ public class Scheduler {
                     shiftsForDay.add(shift);
                 }
             }
+            if (calendar.get(Calendar.DAY_OF_YEAR) - previousSunday > 7) {
+                //if it is, reset the remaining hours for all employees
+                for (Employee employee : employees) {
+                    employee.setRemainingHours(employee.getMaximumHours());
+                }
+                //set the previous sunday to the current shift's day
+                int offset = calendar.get(Calendar.DAY_OF_YEAR) - previousSunday;
+                offset = offset - (offset % 7);
+                previousSunday = previousSunday + offset;
+            }
             //sort the shifts by date
             Collections.sort(shiftsForDay, new Comparator<Shift>() {
                 @Override
@@ -960,29 +970,30 @@ public class Scheduler {
 
             for (Shift shift : shiftsForDay) {
                 //check if the shift is more than a week away from the previous sunday
-                if (shift.getShiftDate().get(Calendar.DAY_OF_YEAR) - previousSunday > 7) {
-                    //if it is, reset the remaining hours for all employees
-                    for (Employee employee : employees) {
-                        employee.setRemainingHours(employee.getMaximumHours());
-                    }
-                    //set the previous sunday to the current shift's day
-                    previousSunday = shift.getShiftDate().get(Calendar.DAY_OF_YEAR);
-                }
                 
                 for (Employee employee : employeesForDay) {
                     Availability availability = employee.getAvailability().get(dayOfWeek-1);
-
+                    int shiftLength = shift.getEndTime().getHour() - shift.getStartTime().getHour();
                     if (rolesMatch(employee.getRoles(), shift.getNeededRoles()) &&
                             (availability.getStartTime().isBefore(shift.getStartTime()) || availability.getStartTime().toString().equals(shift.getStartTime().toString())) &&
                             ((availability.getEndTime().isAfter(shift.getEndTime())) || availability.getEndTime().toString().equals(shift.getEndTime().toString()))
-                            && (employee.getRemainingHours() >= (shift.getEndTime().getHour() - shift.getStartTime().getHour()))) {
+                            && employee.getRemainingHours() >= shiftLength) {
                         shift.setEmployeeID(employee.getId());
                         employeesForDay.remove(employee);
-                        employee.setRemainingHours(employee.getRemainingHours() - shift.getEndTime().getHour() - shift.getStartTime().getHour());
+                        employee.setRemainingHours(employee.getRemainingHours() - shiftLength);
                         System.out.println("Assigned shift: " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime().toString() + " - " + shift.getEndTime().toString() + " to employee: "+ employee.getFirstName() + " " + employee.getLastName() + " with ID: " + employee.getId());
                         break;
                     } else {
-                        System.out.println("Could not assign shift: " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + shift.getStartTime().toString() + " - " + shift.getEndTime().toString() + " to employee: "+ employee.getFirstName() + " " + employee.getLastName() + " with ID: " + employee.getId());
+                        //Give the reason why the shift was not assigned
+                        if(!rolesMatch(employee.getRoles(), shift.getNeededRoles())){
+                            System.out.println("Employee: " + employee.getFirstName() + " " + employee.getLastName() + " with ID: " + employee.getId() + " does not have the required roles for shift: " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime().toString() + " - " + shift.getEndTime().toString());
+                        } else if(!(availability.getStartTime().isBefore(shift.getStartTime()) || availability.getStartTime().toString().equals(shift.getStartTime().toString()))){
+                            System.out.println("Employee: " + employee.getFirstName() + " " + employee.getLastName() + " with ID: " + employee.getId() + " is not available at the start time of shift: " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime().toString() + " - " + shift.getEndTime().toString());
+                        } else if(!((availability.getEndTime().isAfter(shift.getEndTime())) || availability.getEndTime().toString().equals(shift.getEndTime().toString()))){
+                            System.out.println("Employee: " + employee.getFirstName() + " " + employee.getLastName() + " with ID: " + employee.getId() + " is not available at the end time of shift: " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime().toString() + " - " + shift.getEndTime().toString());
+                        } else if(!(employee.getRemainingHours() >= (shift.getEndTime().getHour() - shift.getStartTime().getHour()))){
+                            System.out.println("Employee: " + employee.getFirstName() + " " + employee.getLastName() + " with ID: " + employee.getId() + " does not have enough hours remaining for shift: " + shift.getShiftDate().get(Calendar.DAY_OF_YEAR) + " " + shift.getStartTime().toString() + " - " + shift.getEndTime().toString());
+                        }
                     }
                 }
             }
