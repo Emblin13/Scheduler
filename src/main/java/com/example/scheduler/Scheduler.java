@@ -8,6 +8,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.File;
@@ -1080,9 +1081,10 @@ public class Scheduler {
         System.out.println("Schedule printed to " + ss.getHomeDirectory() + "\\Pictures\\Schedules");
     }
 
+    //Deletes all shifts and refreshes the graphics
     private void eraseSchedule() {
-        if (!subMenuOpen) {
-            subMenuOpen = true;
+        //if (!subMenuOpen) {
+            //subMenuOpen = true;
             Stage subStage = new Stage();
             subStage.setTitle("Erase schedule");
             VBox layout = new VBox(10);
@@ -1092,14 +1094,26 @@ public class Scheduler {
             Button noButton = new Button("No");
             noButton.setOnAction(e -> subStage.close());
             Button yesButton = new Button("Yes");
-            yesButton.setOnAction(e -> {shifts.clear(); subStage.close();});
+            yesButton.setOnAction(e -> {
+                for (Shift shift : shifts) {
+                    shift.setEmployeeID(-1);
+                }
+                showWeek(0);
+                subStage.close();
+            });
 
             layout.getChildren().addAll(erasePrompt, noButton, yesButton);
 
-            //Set the scene and show the stage.
-            Scene scene = new Scene(layout, 500, 400);
+            Scene scene = new Scene(layout, 400, 100);
+
+            //Block interaction with the parent window while the substage is open
+            subStage.initModality(Modality.APPLICATION_MODAL);
+
             subStage.setScene(scene);
-        }
+            stage.show();
+
+            subStage.show();
+        //}
     }
 
     public int getStageWidth() { return (int) stage.getWidth(); }
