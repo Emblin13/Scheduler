@@ -441,6 +441,7 @@ public class Scheduler {
                 String hireDateString = hireDateTextArea.getText();
                 String priorityString = priorityTextArea.getText();
                 int maxDesiredHours = checkString(maxDesiredHoursTextArea.getText()) ? Integer.parseInt(maxDesiredHoursTextArea.getText()) : 40;
+                int maxHours = checkString(maxTextArea.getText()) ? Integer.parseInt(maxTextArea.getText()) : 40;
                 String maxString = maxTextArea.getText();
 
                 //check if the user selected a day of the week and if they did, get the start and end time of that day.
@@ -469,7 +470,7 @@ public class Scheduler {
                     return;
                 } else {
                     //public Employee(String firstName, String lastName, int maxHours, LocalDate hireDate,List<Availability> availability, ArrayList<Role> roles)
-                    editEmployee(firstName, lastName, maxDesiredHours, hireDate, tempRoles, finalAvailability);
+                    editEmployee(firstName, lastName, maxHours, hireDate, tempRoles, finalAvailability);
                     subStage.close();
                     subMenuOpen = false;
                 }
