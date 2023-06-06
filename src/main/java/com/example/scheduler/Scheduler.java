@@ -1054,7 +1054,13 @@ public class Scheduler {
             Button noButton = new Button("No");
             noButton.setOnAction(e -> subStage.close());
             Button yesButton = new Button("Yes");
-            yesButton.setOnAction(e -> {shifts.clear(); showWeek(0); subStage.close();});
+            yesButton.setOnAction(e -> {
+                for (Shift shift : shifts) {
+                    shift.setEmployeeID(-1);
+                }
+                showWeek(0);
+                subStage.close();
+            });
 
             layout.getChildren().addAll(erasePrompt, noButton, yesButton);
 
