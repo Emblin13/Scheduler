@@ -27,7 +27,7 @@ public class Shift
         this.shiftDate = shiftDate;
     }
 
-    //To string method
+    //To string method. Converts shift to a string for saving to a file.
     public String toString() {
         String holder = "";
         holder += shiftDay + " " + startTime + " " + endTime + " " + minimumShiftLength + " " + maximumShiftLength + " ^";
@@ -112,12 +112,17 @@ public class Shift
         return shiftDate;
     }
 
+    //Generates a color based on the shift's hashcode.
     public String getColor() {
+        //Get the hashcode of the shift and convert it to a string. Exclude the last word of the string, which is the employee ID.
         String temp = toString().substring(0, toString().lastIndexOf(" "));
+        //Makes the color a positive value
         String color = String.valueOf(Math.abs(temp.hashCode()));
         color = String.format("#%6s", color).replace(' ', '0');
 
+        //Get the red, green, and blue values of the color
         String red = color.substring(1, 3);
+        //If the color is too dark, make it lighter
         if (Integer.parseInt(red, 16) < 127){
             int redInt = Integer.parseInt(red, 16);
             redInt = 255 - redInt;
@@ -147,6 +152,7 @@ public class Shift
             blue = Integer.toHexString(blueInt);
         }
 
+        //Recombine the color
         color = "#" + red + green + blue;
         return color;
     }

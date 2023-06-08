@@ -58,7 +58,8 @@ public class Employee implements Comparable<Employee> {
     public int getRemainingHours() {
         return remainingHours;
     }
-    //To String method
+
+    //To String method. This is used save the employee a text file.
     @Override
     public String toString() {
         String avail = "";

@@ -18,7 +18,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -29,49 +28,49 @@ public class Scheduler {
     Stage stage;
     ArrayList<Role> roles = new ArrayList<Role>();
 
+    //dayOffset keeps track of what week the user is on.
     int dayOffset;
+    //tempId is used to keep track of the id of the employee being edited
     int tempId = -1;
+    //Fx elements for the main menu
     BorderPane mainBorderlayout;
     HBox topMenu;
     GridPane grid;
     Scene scene;
-    //Boolean to keep track of if the sub menu is open or not
+    //Boolean to keep track of if the sub menu is open or not.
     Boolean subMenuOpen = false;
-    Map<Employee, Shift> shiftEmployeeMap = new HashMap<Employee, Shift>();
-    Saver saver = new Saver();
-    Reader reader = new Reader();
 
     //Random seed for testing based on the current time
     Random rand = new Random(System.currentTimeMillis());
+    //Used to generate random priority for employees.
     int seed = rand.nextInt(1000000);
 
-    //buttons
+    //buttons for the main menu
     private Button addRoleButton;
     private Button addEmployeeButton;
     private Button saveButton;
     private Button loadButton;
     private Button editRoleButton;
     private Button generateScheduleButton;
-    private Button addShiftButton;
-    private Button editShiftButton;
     private Button previousWeekButton;
     private Button nextWeekButton;
     private Button printScheduleButton;
     private Button eraseScheduleButton;
 
+    //Empty constructor
     public Scheduler(){
         System.out.println("Scheduler created");
     }
 
+    //Used for the initial creation of the Scheduler's main menu.
     public void start(Stage stage){
         mainBorderlayout = new BorderPane();
-        //Set background color to dark grey
         scene = new Scene(mainBorderlayout, 1000, 700);
         System.out.println("Scheduler started");
         this.stage = stage;
         stage.setTitle("Scheduler");
 
-        //Create buttons and make everyother button a different color
+        //Created buttons for the main menu and set their styles.
         addRoleButton = new Button("Add Role");
         addRoleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
         addEmployeeButton = new Button("Add Employee");
@@ -93,19 +92,20 @@ public class Scheduler {
             showWeek(dayOffset);
         });
         previousWeekButton = new Button("Previous Week");
-        previousWeekButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
+        previousWeekButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
         nextWeekButton = new Button("Next Week");
-        nextWeekButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
+        nextWeekButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
 
         printScheduleButton = new Button("Print Schedule");
-        printScheduleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
+        printScheduleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
         printScheduleButton.setOnAction(e -> printSchedule());
         eraseScheduleButton = new Button("Erase Schedule");
-        eraseScheduleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #b3b3b3;");
+        eraseScheduleButton.setStyle("-fx-background-radius: 0; -fx-background-color: #cccccc;");
         eraseScheduleButton.setOnAction(e -> eraseSchedule());
 
         previousWeekButton.setOnAction(e -> {
             dayOffset -= 7;
+            //Doesn't allow the user to go past the first week.
             if (dayOffset < 0){
                 dayOffset = 0;
             }
@@ -114,6 +114,7 @@ public class Scheduler {
 
         nextWeekButton.setOnAction(e -> {
             dayOffset += 7;
+            //Doesn't allow the user to go past 4 weeks.
             if(dayOffset > 28){
                 dayOffset = 28;
             }
@@ -129,15 +130,19 @@ public class Scheduler {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         topMenu = new HBox(0);
+        //Adds all the buttons to the top menu
         topMenu.getChildren().addAll(addRoleButton, addEmployeeButton, saveButton, loadButton, editRoleButton, generateScheduleButton, printScheduleButton, eraseScheduleButton, previousWeekButton, nextWeekButton, spacer);
 
+        //Creates the grid for the main menu.
         showWeek(0);
 
+        //Sets the top menu and grid to the main menu
         mainBorderlayout.setTop(topMenu);
         mainBorderlayout.setCenter(grid);
         stage.setScene(scene);
     }
 
+    //Used to add employees to the grid and set their interactions.
     private void addEmployeeRow(ArrayList<Employee> employees, int index){
         Employee employee = employees.get(index);
         Button button = new Button(employee.getFirstName() + " " + employee.getLastName());
@@ -184,6 +189,7 @@ public class Scheduler {
         }
     }
 
+    //Used to manually add shifts to employees.
     private void editSchedule(Employee employee, int dayOffset){
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DATE, dayOffset);
@@ -194,7 +200,6 @@ public class Scheduler {
         int maximumShiftLength = 24;
         ArrayList<Role> neededRoles = new ArrayList<Role>();
         Calendar shiftDate = calendar;
-        //public Shift(DayOfWeek shiftDay, LocalTime startTime, LocalTime endTime, int minimumShiftLength, int maximumShiftLength, ArrayList<String> neededRoles, Calendar shiftDate)
         Shift tempShift = new Shift(dayOfWeek, startTime, endTime, minimumShiftLength, maximumShiftLength, neededRoles, shiftDate);
         tempShift.setEmployeeID(employee.getId());
         System.out.println("Adding shift to " + employee.getFirstName() + " " + employee.getLastName());
@@ -203,6 +208,7 @@ public class Scheduler {
         editShift(tempShift);
     }
 
+    //Refreshes the grid to show the current week and all employees with their shifts.
     private void showWeek(int mod){
         mainBorderlayout.getChildren().remove(grid);
         grid = new GridPane();
@@ -270,8 +276,9 @@ public class Scheduler {
         }
     }
 
-    //Also allows you to add a new employee
+    //Shows the add/edit employee menu.
     private void employeeStage(Employee employee){
+        //If the sub menu is open don't open another one.
         if (!subMenuOpen){
             tempId = -1;
             Stage subStage = new Stage();
@@ -279,10 +286,11 @@ public class Scheduler {
             ArrayList<Role> tempRoles = new ArrayList<>();
             List<Availability> availability = new ArrayList<Availability>();
 
-            //check if employee is null, if not, get availability
+            //check if employee is null, if not, get availability.
             if (employee != null){
                 availability = employee.getAvailability();
             } else {
+                //If the employee is null, add a default availability.
                 for (int i = 0; i < 7; i++){
                     DayOfWeek dayOfWeek = DayOfWeek.of(i + 1);
                     LocalTime start = LocalTime.of(0, 0);
@@ -291,7 +299,7 @@ public class Scheduler {
                 }
             }
 
-            //Layout for the sub menu inputs.
+            //Adds gui elements for all the traits of an employee, so the user can edit them.
             HBox firstNameLayout = new HBox(10);
             HBox lastNameLayout = new HBox(10);
             HBox hireDateLayout = new HBox(10);
@@ -311,14 +319,15 @@ public class Scheduler {
             lastNameTextArea.setPrefHeight(20);
             lastNameTextArea.setPrefWidth(110);
 
+            //Sets the default hire date to the current date.
             Text hireDateText = new Text("Hire Date");
             TextArea hireDateTextArea = new TextArea();
             LocalDate date = LocalDate.now();
-            //set the hire date to the current date.
             hireDateTextArea.setText(date.toString());
             hireDateTextArea.setPrefHeight(20);
             hireDateTextArea.setPrefWidth(110);
 
+            //Sets up the availability text and text area. The user can edit each day's availability through a drop down menu and two text areas for the beginning and end of the availability.
             Text availabilityText = new Text("Availability");
             //Availability has a drop down menu for the user to select the availability for each day of the week and a text area for the user to enter the beginning and end of the availability.
             ComboBox<String> availabilityComboBox = new ComboBox<>();
@@ -333,8 +342,9 @@ public class Scheduler {
             availabilityTextArea2.setPrefHeight(20);
             availabilityTextArea2.setPrefWidth(110);
 
-            //add event handler for the drop down menu to add the availability to the day of the week unless no day is selected.
+            //add event handler for the drop down menu so the user can input the availability for each day of the week for the employee.
             List<Availability> finalAvailability = availability;
+            //use an atomic reference to store the previous day of the week so that when the user selects a new day of the week, the previous day's availability can be saved.
             AtomicReference<String> previousDay = new AtomicReference<>("");
             availabilityComboBox.setOnAction(e -> {
                 if(!availabilityTextArea1.getText().isBlank() || !availabilityTextArea2.getText().isBlank()){
@@ -342,6 +352,7 @@ public class Scheduler {
                     LocalTime start = LocalTime.parse(availabilityTextArea1.getText());
                     LocalTime end = LocalTime.parse(availabilityTextArea2.getText());
                     Availability tempAvailability = new Availability(dayOfWeek, start, end);
+                    //find the day in the availability list and replace it with the new availability.
                     for (int i = 0; i < finalAvailability.size(); i++){
                         String dayFinal = finalAvailability.get(i).getDay().toString().toLowerCase(Locale.ROOT);
                         String inputDay = previousDay.toString().toLowerCase(Locale.ROOT);
@@ -350,6 +361,7 @@ public class Scheduler {
                             break;
                         }
                     }
+                    //Changes the input boxes based on the day selected.
                     for (int i = 0; i < finalAvailability.size(); i++){
                         String dayFinal = finalAvailability.get(i).getDay().toString().toLowerCase(Locale.ROOT);
                         String inputDay = availabilityComboBox.getValue().toLowerCase(Locale.ROOT);
@@ -380,6 +392,7 @@ public class Scheduler {
 
             });
 
+            //More input boxes for the employee's information.
             Text priorityText = new Text("Priority");
             TextArea priorityTextArea = new TextArea();
             priorityTextArea.setText("1");
@@ -427,8 +440,9 @@ public class Scheduler {
             layout.getChildren().addAll(firstNameLayout, lastNameLayout, hireDateLayout, availabilityLayout, preferencesLayout, priorityLayout, maxHoursLayout, maximumHoursLayout);
             layout.setAlignment(javafx.geometry.Pos.CENTER);
 
-            //A drop down menu to select the role of the employee.
+            //A drop down menu to select the roles of the employee.
             ArrayList<ChoiceBox> choiceBoxes = new ArrayList<>();
+            //If the employee is not null, then add the previous roles to the choice boxes.
             if (employee != null && employee.getRoles() != null) {
                 for (int i = 0; i < employee.getRoles().size(); i++){
                     ChoiceBox choiceBox = new ChoiceBox();
@@ -443,6 +457,7 @@ public class Scheduler {
             ChoiceBox choiceBox = new ChoiceBox();
             choiceBoxesAddRoles(choiceBox);
             choiceBoxes.add(choiceBox);
+            //When the choice box is selected, add another choice box to the list.
             choiceBox.setOnAction(e -> choiceBoxEvent(choiceBox, choiceBoxes, tempRoles, layout));
 
             //Add the choice box to the main layout.
@@ -471,6 +486,7 @@ public class Scheduler {
                     //create a new availability object
                     Availability tempAvailability = new Availability(dayOfWeek, start, end);
 
+                    //Used to add the availability to the final availability list.
                     int index = -1;
                     for (int i = 0; i < finalAvailability.size(); i++){
                         String dayFinal = finalAvailability.get(i).getDay().toString().toLowerCase(Locale.ROOT);
@@ -488,13 +504,11 @@ public class Scheduler {
                 int priority = checkString(priorityString) ? Integer.parseInt(priorityString) : -1;
                 int max = checkString(maxString) ? Integer.parseInt(maxString) : -1;
 
-
                 //If the first or last name is blank, or the ID is already in the list, don't add the employee.
                 if (firstName.equals("") || lastName.equals("")) {
                     System.out.println("First or last name is blank");
                     return;
                 } else {
-                    //public Employee(String firstName, String lastName, int maxHours, LocalDate hireDate,List<Availability> availability, ArrayList<Role> roles)
                     editEmployee(firstName, lastName, maxHours, hireDate, tempRoles, finalAvailability);
                     subStage.close();
                     subMenuOpen = false;
@@ -504,6 +518,7 @@ public class Scheduler {
             //Add the submit button to the main layout.
             layout.getChildren().add(submitButton);
 
+            //If the employee is not null, add a delete button to the sub menu.
             if (employee != null){
                 Button deleteButton = new Button("Delete");
                 deleteButton.setOnAction(e -> {
@@ -528,15 +543,7 @@ public class Scheduler {
         }
     }
 
-    private boolean sameNameRole(String name){
-        for (Role role : roles){
-            if (role.getName().equals(name)){
-                return true;
-            }
-        }
-        return false;
-    }
-
+    //Method to create a new employee or edit an existing employee.
     private void editEmployee(String first, String last, int maxHours, LocalDate hire, ArrayList<Role> tempList, List<Availability> availability){
         Employee employee = null;
         int id = tempId;
@@ -575,10 +582,6 @@ public class Scheduler {
         return -1;
     }
 
-    public ArrayList<Employee> getEmployees() {
-        return employees;
-    }
-
     private int assignId() {
         int newId = 0;
         for (Employee e : this.employees) {
@@ -589,6 +592,7 @@ public class Scheduler {
         return newId;
     }
 
+    //The edit/add role sub menu.
     private void roleStage(Role role){
         if (!subMenuOpen){
             tempId = -1;
@@ -598,6 +602,7 @@ public class Scheduler {
             //Layout for the sub menu inputs.
             HBox roleNameLayout = new HBox(10);
 
+            //Sets up the input boxes for creating a new box.
             //Text and text area for the first and last name.
             Text roleName = new Text("Role Name");
             TextArea roleNameTextArea = new TextArea();
@@ -667,6 +672,7 @@ public class Scheduler {
         }
     }
 
+    //Adds the roles to the choice box.
     private void choiceBoxesAddRoles(ChoiceBox choiceBox){
         for (Role role : roles){
             choiceBox.getItems().add(role.getName());
@@ -683,6 +689,7 @@ public class Scheduler {
         return null;
     }
 
+    //The choice box event for the roles. So that the user can add and remove as many roles as they want.
     private void choiceBoxEvent(ChoiceBox choiceBox, ArrayList<ChoiceBox> choiceBoxes, ArrayList<Role> tempRoles, VBox layout){
         if(choiceBox.getValue().equals("")){
             if(choiceBoxes.size() == 1){
@@ -718,7 +725,9 @@ public class Scheduler {
         }
     }
 
+    //Allows the user to edit a role from the roles list.
     private void editRoleStage(){
+        //If the sub menu is open, don't open another one.
         if (!subMenuOpen){
             tempId = -1;
             Stage subStage = new Stage();
@@ -749,9 +758,12 @@ public class Scheduler {
         }
     }
 
+    //Stage for editing a shifts.
     public void editShift(Shift shift){
+        //If the sub menu is open, don't open another one.
         if (!subMenuOpen){
             tempId = -1;
+            //Sets up a submenu for editing a shift. The submenu sets up input fields for the user to edit the shift.
             Stage subStage = new Stage();
             subStage.setTitle("Edit Shift");
             VBox layout = new VBox(10);
@@ -785,8 +797,10 @@ public class Scheduler {
             maxRequirementsTextArea.setPrefWidth(50);
             maxRequirements.getChildren().addAll(maxRequirementsText, maxRequirementsTextArea);
 
+            //Add the input fields to the main layout.
             layout.getChildren().addAll(timeBox, minRequirements, maxRequirements);
 
+            //Create a list of choice boxes for the roles and a list to hold the roles that are selected.
             ArrayList<Role> tempRoles = new ArrayList<>();
             ArrayList<ChoiceBox> choiceBoxes = new ArrayList<>();
             for (int i = 0; i < shift.getNeededRoles().size(); i++){
@@ -851,6 +865,7 @@ public class Scheduler {
         }
     }
 
+    //Checks if a string is null or blank.
     private boolean checkString(String string) {
         if (string == null || string.isBlank()) {
             return false;
@@ -858,6 +873,7 @@ public class Scheduler {
         return true;
     }
 
+    //Allows the user look at the shifts for a specific day and allows them to edit them.
     private void dayShifts(Calendar calendar){
         if (!subMenuOpen) {
             System.out.println("Showing shifts for: "+calendar.get(Calendar.DAY_OF_YEAR));
@@ -901,7 +917,6 @@ public class Scheduler {
                 int maximumShiftLength = 24;
                 ArrayList<Role> neededRoles = new ArrayList<Role>();
                 Calendar shiftDate = calendar;
-                //public Shift(DayOfWeek shiftDay, LocalTime startTime, LocalTime endTime, int minimumShiftLength, int maximumShiftLength, ArrayList<String> neededRoles, Calendar shiftDate)
                 Shift tempShift = new Shift(dayOfWeek, startTime, endTime, minimumShiftLength, maximumShiftLength, neededRoles, shiftDate);
                 this.shifts.add(tempShift);
                 subStage.close();
@@ -925,6 +940,7 @@ public class Scheduler {
         }
     }
 
+    //Check if the employee has one of the required roles.
     private boolean rolesMatch(ArrayList<Role> employeeRoles, ArrayList<Role> requiredRoles) {
         for (int i = 0; i < requiredRoles.size(); i++) {
             for (int j = 0; j < employeeRoles.size(); j++) {
@@ -961,6 +977,7 @@ public class Scheduler {
         for (int i = 0; i < 28; i++){
             ArrayList<Shift> shiftsForDay = new ArrayList<>();
             ArrayList<Employee> employeesForDay = new ArrayList<>();
+            //get all shifts for the current day.
             for (Shift shift : shifts) {
                 int shiftDay = shift.getShiftDate().get(Calendar.DAY_OF_YEAR);
                 int currentDay = shiftCalendar.get(Calendar.DAY_OF_YEAR);
@@ -972,7 +989,7 @@ public class Scheduler {
                 }
             }
             if (calendar.get(Calendar.DAY_OF_YEAR) - previousSunday > 7) {
-                //if it is, reset the remaining hours for all employees
+                //reset all employees remaining hours if it is a new week
                 for (Employee employee : employees) {
                     employee.setRemainingHours(employee.getMaximumHours());
                 }
@@ -988,7 +1005,7 @@ public class Scheduler {
                     return o1.getShiftDate().compareTo(o2.getShiftDate());
                 }
             });
-
+            //add all employees to the list of employees for the day
             for (Employee employee : employees) {
                 employeesForDay.add(employee);
             }
@@ -996,8 +1013,7 @@ public class Scheduler {
             Collections.shuffle(employeesForDay, new Random(seed));
 
             for (Shift shift : shiftsForDay) {
-                //check if the shift is more than a week away from the previous sunday
-                
+                //get the employees that are available for the shift
                 for (Employee employee : employeesForDay) {
                     calendar.set(Calendar.DAY_OF_YEAR, shift.getShiftDate().get(Calendar.DAY_OF_YEAR) - 1);
                     Availability availability = null;
@@ -1019,6 +1035,7 @@ public class Scheduler {
                     //check if the employee is available for the shift
                     if (rolesMatch(employee.getRoles(), shift.getNeededRoles()) && employee.getRemainingHours() >= shiftLength &&
                             shiftStart >= employeeStart && shiftEnd <= employeeEnd) {
+                        //assign the shift to the employee
                         shift.setEmployeeID(employee.getId());
                         employeesForDay.remove(employee);
                         employee.setRemainingHours(employee.getRemainingHours() - shiftLength);
@@ -1043,11 +1060,9 @@ public class Scheduler {
         showWeek(dayOffset);
     }
 
-    public Availability createAvailability(DayOfWeek day, LocalTime startTime, LocalTime endTime) {
-        return new Availability(day, startTime, endTime);
-    }
-
+    //Save employees, shifts, and roles to files.
     private void save(){
+        //check if there are employees, shifts, and roles to save.
         if(employees.size() > 0 && shifts.size() > 0 && roles.size() > 0){
             Saver saver = new Saver();
             try {
@@ -1060,6 +1075,7 @@ public class Scheduler {
         }
     }
 
+    //Loads employees, shifts, and roles from files.
     private void load(){
         Reader reader = new Reader();
         try {
@@ -1072,6 +1088,7 @@ public class Scheduler {
         start(stage);
     }
 
+    //Prints the schedule to a file.
     private void printSchedule() {
         ScreenShotter ss = new ScreenShotter();
         //ss.getScreen();
